@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\x64\Debug\ZERO_CHECK</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\bin\Debug\ggml-base.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\bin\Debug\ggml-cpu.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\bin\Debug\ggml.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\bin\Debug\llama.dll</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\Debug\workout.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>C:\Users\wmzss\Documents\software_st\RunAssistAI\RunAssistAi_demo\build\x64\Debug\ALL_BUILD</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles />
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

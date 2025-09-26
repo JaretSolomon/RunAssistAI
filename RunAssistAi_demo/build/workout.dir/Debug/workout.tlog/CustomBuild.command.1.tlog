@@ -1,0 +1,10 @@
+^C:\USERS\WMZSS\DOCUMENTS\SOFTWARE_ST\RUNASSISTAI\RUNASSISTAI_DEMO\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo -BC:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/build --check-stamp-file C:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,10 @@
+^C:\USERS\WMZSS\DOCUMENTS\SOFTWARE_ST\RUNASSISTAI\RUNASSISTAI_DEMO\BUILD\CMAKEFILES\61D739DA163A2BCF4F27146881398102\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo -BC:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/build/WorkoutApp.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
