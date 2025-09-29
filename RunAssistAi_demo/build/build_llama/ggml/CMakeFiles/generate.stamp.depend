@@ -1,0 +1,25 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.30/Modules/BasicConfigVersion-SameMajorVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeASMCompiler.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeASMInformation.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeCompilerIdDetection.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompiler.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeFindBinUtils.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeTestASMCompiler.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckCSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckIncludeFile.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckLibraryExists.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Compiler/MSVC-ASM.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindPackageHandleStandardArgs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindPackageMessage.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindThreads.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/GNUInstallDirs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Internal/CheckSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/WriteBasicConfigVersionFile.cmake
+C:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/build/CMakeFiles/3.30.2/CMakeASMCompiler.cmake
+C:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/third_party/llama.cpp/ggml/CMakeLists.txt
+C:/Users/wmzss/Documents/software_st/RunAssistAI/RunAssistAi_demo/third_party/llama.cpp/ggml/cmake/ggml-config.cmake.in
