@@ -1,16 +1,16 @@
-from flask import Flask
+from flask import Flask , render_template
 
 app = Flask(__name__)
 
 @app.route("/")
-@app.route("/login")
-def login():
-    return "<p>Welcome to RunAssist!</p>"
+@app.route("/home")
+def home():
+    return render_template('home.html')
 
 @app.route("/logrun")
 def log_run():
-    return "<p>Log a Run!</p>"
+    return render_template('logrun.html')
 
 @app.route("/viewstats")
 def view_stats():
-    return "<p>View Statistics!</p>"
+    return render_template('viewstats.html')
