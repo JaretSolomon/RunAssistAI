@@ -23,9 +23,9 @@ class RunMetric:
             duration = end_time - start_time
         if isinstance(duration, (int, float)):
             duration = timedelta(seconds=duration)
-        self.duration = duration if duration is not None else timedelta()
+        self.duration = duration if duration is not None else timedelta() 
 
-    def __repr__(self):
+    def __repr__(self):  # This is a magic method that is used to represent the object as a string
         return (
             f"RunMetric(distance={self.distance}, duration={self.duration}, "
             f"start_time={self.start_time}, end_time={self.end_time})"
@@ -78,7 +78,7 @@ class runnerSession:
             "ended_at": self.endTime,
             "total_distance": self.totalDistance,
             "total_duration": effective_duration,
-        }
+        } # This is a dictionary that is used to return the summary of the session in JSON
 
     def reset(self):
         self.startTime = None
@@ -118,8 +118,8 @@ class Runner(User):
     def record_session_metric(self, distance, duration=None, start_time=None, end_time=None):
         if self.currentSession is None:
             raise RuntimeError("No active session to record metrics")
-        metric = RunMetric(distance, duration=duration, start_time=start_time, end_time=end_time)
-        return self.currentSession.record_metric(metric)
+        metric = RunMetric(distance, duration=duration, start_time=start_time, end_time=end_time) # This is a class that is used to record the metric of the session
+        return self.currentSession.record_metric(metric) # This is a method that is used to record the metric of the session
 
     def endRun(self):
         if self.currentSession is None:
