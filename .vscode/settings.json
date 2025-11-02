@@ -125,5 +125,14 @@
   },
   "python-envs.defaultEnvManager": "ms-python.python:system",
   "python-envs.defaultPackageManager": "ms-python.python:pip",
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "test_*.py"
+  ],
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": true
 }
