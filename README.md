@@ -12,7 +12,7 @@ use py -3 -m venv .venv
 Set-ExecutionPolicy Unrestricted -Scope Process
 THEN RUN #2 AGAIN
 
-3) DOWNLOAD FLASK IN THE VENV
+3) DOWNLOAD FLASK IN THE VENV (only need to do this the first time)
 pip install Flask
 
 4) TO RUN THE PROJECT DO flask --app GUI run
