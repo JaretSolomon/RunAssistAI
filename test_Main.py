@@ -117,6 +117,6 @@ class TestRunnerSession(unittest.TestCase):
         self.assertTrue(session.totalDistance == 0.0)
 
 
-
+#Run the tests
 if __name__ == '__main__':
     unittest.main()
