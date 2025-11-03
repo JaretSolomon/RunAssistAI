@@ -48,6 +48,7 @@ class TestRunnerSession(unittest.TestCase):
     def test_begin(self, mock_print):
         session = runnerSession("S1")
         session.begin()
+        #Assert that the sesion has a start time
         self.assertIsNotNone(session.startTime)
         mock_print.assert_called_once()
         self.assertIn("Runner session S1 started at", mock_print.call_args[0][0])
@@ -100,5 +101,22 @@ class TestRunnerSession(unittest.TestCase):
         self.assertEqual(summary["total_duration"], timedelta(seconds=60))
 
     
+    def test_reset(self):
+        #Create data to clear
+        session = runnerSession("S6")
+        session.startTime = datetime.now()
+        session.endTime = datetime.now()
+        session.totalDistance = 15.0
+        session.metrics.append(RunMetric(1.0,100))
+        #Actually reset/clear the session
+        session.reset()
+
+        #Now test that all these categories are empty
+        self.assertIsNone(session.startTime)
+        self.assertIsNone(session.endTime)
+        self.assertTrue(session.totalDistance == 0.0)
+
+
+
 if __name__ == '__main__':
     unittest.main()
