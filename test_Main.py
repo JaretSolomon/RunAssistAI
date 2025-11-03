@@ -1,20 +1,33 @@
+#Import classes we're testing from the Main.py script
 from Main import Runner,  RunnerSessionFactory, runnerSession, RunMetric
+
+#Used unittest to have a premade testing framework
 import unittest
 from unittest.mock import patch
 from datetime import datetime, timedelta
 
 
+#Test the runner class (create a user and fill in details)
 class TestRunner(unittest.TestCase):
 # Test 1: Initialize a user
     def test_initialization(self):
         runner = Runner("Alice")
+
         self.assertEqual(runner.name, "Alice")
+
         self.assertEqual(runner.currentGoal, "No goal set")
+
         self.assertIsNone(runner.currentSession)
+
         self.assertIsInstance(runner.session_factory, RunnerSessionFactory)
+
         self.assertIsInstance(runner.sessionHistory, list)
 
 #Test 2: Test login
+#builtins.print replaces the real print statement with a mock output (like the mocks we discussed in class)
+#then mock_print.assert_called_once_with checks that the output matches the expected output
+#See the documentation for unittest mock here: https://docs.python.org/3/library/unittest.mock.html#patch-builtins
+
     @patch("builtins.print")
     def test_login(self, mock_print):
         runner = Runner("Bob")
