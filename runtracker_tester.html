@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RunTracker API Tester</title>
+<style>
+:root{
+  --bg:#0b1020;--panel:#121a2e;--soft:#1b2440;--text:#e6ecff;
+  --muted:#9fb0ff;--accent:#7aa2ff;--ok:#00c389;--warn:#ffc24b;--err:#ff7777
+}
+body{margin:0;background:linear-gradient(180deg,#0a0f22,#0e1630 40%,#0a0f22);
+  color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial}
+.wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+.card{background:var(--panel);border:1px solid #26325a;border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.35);padding:18px}
+h1{font-size:24px;margin:0 0 12px}
+h2{font-size:18px;margin:18px 0 8px;color:var(--muted)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.col{display:flex;flex-direction:column;gap:6px}
+label{font-size:12px;color:#bcd}
+input,button{background:var(--soft);color:var(--text);border:1px solid #2a3765;
+  border-radius:10px;padding:10px 12px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,162,255,.2)}
+button{cursor:pointer;transition:.15s transform ease,.15s opacity ease}
+button:hover{transform:translateY(-1px)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.btn{background:#1f2b52}
+.btn.ok{background:linear-gradient(135deg,#0aa37f,#00c389)}
+.btn.warn{background:linear-gradient(135deg,#cc9a2e,#ffc24b);color:#1a1400}
+.btn.err{background:linear-gradient(135deg,#b04,#ff7777)}
+pre{margin:0;background:#0c1126;border:1px solid #26325a;border-radius:10px;
+  padding:12px;max-height:420px;overflow:auto}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+  padding:4px 10px;background:#162044;border:1px solid #2a3765}
+.pill b{color:var(--accent)}
+.sep{height:1px;background:#24315a;margin:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>🏃 RunTracker API Tester</h1>
+    <div class="row">
+      <div class="col">
+        <label>API Base URL</label>
+        <input id="baseUrl" value="http://127.0.0.1:8000" />
+      </div>
+      <div class="col">
+        <label>Username</label>
+        <input id="username" placeholder="alex" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnResolve" class="btn ok">Resolve / Create User</button>
+      </div>
+      <div class="col">
+        <label>Current user</label>
+        <div id="currentUser" class="pill">user_id: <b>—</b></div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <h2>Run Controls</h2>
+    <div class="row">
+      <div class="col">
+        <label>Optional note</label>
+        <input id="note" placeholder="evening tempo" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnStart" class="btn">Start Run</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Distance (km)</label>
+        <input id="dist" type="number" step="0.01" min="0.01" />
+      </div>
+      <div class="col">
+        <label>Duration (sec)</label>
+        <input id="secs" type="number" step="1" min="1" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnAdd" class="btn">Add Metric</button>
+      </div>
+      <div class="col">
+        <label>Total Distance (optional)</label>
+        <input id="finalKm" type="number" step="0.01" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnStop" class="btn warn">Stop Run</button>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <h2>History / Prompt</h2>
+    <div class="row">
+      <div class="col">
+        <label>Limit</label>
+        <input id="limit" type="number" value="10" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnHist" class="btn">View History</button>
+      </div>
+      <div class="col">
+        <label>Last N</label>
+        <input id="lastn" type="number" value="5" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnPrompt" class="btn">Prompt Payload</button>
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <button id="btnClear" class="btn err">Clear Output</button>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <h2>Response</h2>
+    <pre id="out">{}</pre>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const out = $('#out');
+let userId = localStorage.getItem('runtracker.userId') || '';
+
+function setOut(obj){
+  out.textContent = JSON.stringify(obj,null,2);
+}
+function updateUser(id){
+  userId = id;
+  localStorage.setItem('runtracker.userId', id);
+  $('#currentUser b').textContent = id || '—';
+}
+async function api(path, method='GET', body=null){
+  const base = $('#baseUrl').value.trim();
+  const opt = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opt.body = JSON.stringify(body);
+  const res = await fetch(base+path, opt);
+  const data = await res.json();
+  if(!res.ok) throw new Error(JSON.stringify(data));
+  return data;
+}
+$('#btnResolve').onclick = async ()=>{
+  try{
+    const data = await api('/users/resolve','POST',{username:$('#username').value});
+    updateUser(data.id);
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnStart').onclick = async ()=>{
+  if(!userId)return alert('Resolve user first');
+  try{
+    const data = await api(`/users/${userId}/run/start`,'POST',{note:$('#note').value||null});
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnAdd').onclick = async ()=>{
+  if(!userId)return alert('Resolve user first');
+  const d=parseFloat($('#dist').value),s=parseInt($('#secs').value);
+  if(!d||!s)return alert('Distance & duration required');
+  try{
+    const data = await api(`/users/${userId}/run/add-metric`,'POST',
+      {distance_km:d,duration_seconds:s});
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnStop').onclick = async ()=>{
+  if(!userId)return alert('Resolve user first');
+  const total=parseFloat($('#finalKm').value)||null;
+  try{
+    const data = await api(`/users/${userId}/run/stop`,'POST',{total_distance_km:total});
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnHist').onclick = async ()=>{
+  if(!userId)return alert('Resolve user first');
+  try{
+    const data = await api(`/users/${userId}/history?limit=${$('#limit').value}`);
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnPrompt').onclick = async ()=>{
+  if(!userId)return alert('Resolve user first');
+  try{
+    const data = await api(`/users/${userId}/prompt?last_n=${$('#lastn').value}`);
+    setOut(data);
+  }catch(e){setOut({error:e.message});}
+};
+$('#btnClear').onclick=()=>setOut({});
+updateUser(userId);
+</script>
+</body>
+</html>

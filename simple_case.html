@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RunTracker Simple UI</title>
+</head>
+<body>
+<h2>RunTracker</h2>
+
+<!-- Register Panel -->
+<div id="registerPanel">
+  <p>
+    <label>Username: <input id="username"></label>
+  </p>
+  <p>
+    <label>Run Type:
+      <select id="runType">
+        <option value="runner">runner</option>
+        <option value="coach">coach</option>
+      </select>
+    </label>
+  </p>
+  <p>
+    <button id="btnRegister">Register</button>
+  </p>
+</div>
+
+<!-- Run Panel -->
+<div id="runPanel" style="display:none">
+  <p>Current User: <b id="currentUser">—</b></p>
+  <p>
+    <button id="btnLogRun">Log Run</button>
+    <button id="btnStop">Stop</button>
+    <button id="btnHistory">View History</button>
+  </p>
+</div>
+
+<pre id="out">{}</pre>
+
+<script>
+const baseUrl = "http://127.0.0.1:8000"; // change to :5000 if using Flask
+const $ = s => document.querySelector(s);
+const out = $('#out');
+let userId = null;
+
+function show(id){ $(id).style.display='block'; }
+function hide(id){ $(id).style.display='none'; }
+function setOut(obj){ out.textContent = JSON.stringify(obj,null,2); }
+
+async function api(path, method='GET', body=null){
+  const opt = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opt.body = JSON.stringify(body);
+  const res = await fetch(baseUrl+path, opt);
+  const data = await res.json();
+  if(!res.ok) throw new Error(JSON.stringify(data));
+  return data;
+}
+
+// Register
+$('#btnRegister').onclick = async ()=>{
+  const username = $('#username').value.trim();
+  const runType = $('#runType').value;
+  if(!username){ alert("Enter username"); return; }
+  try{
+    const data = await api('/users/resolve','POST',{username, role: runType});
+    userId = data.id;
+    $('#currentUser').textContent = `${username} (${runType})`;
+    hide('#registerPanel');
+    show('#runPanel');
+    setOut(data);
+  }catch(e){ setOut({error:e.message}); }
+};
+
+// Log run
+$('#btnLogRun').onclick = async ()=>{
+  if(!userId){ alert("Register first"); return; }
+  try{
+    const data = await api(`/users/${userId}/run/start`,'POST',{});
+    setOut(data);
+  }catch(e){ setOut({error:e.message}); }
+};
+
+// Stop run
+$('#btnStop').onclick = async ()=>{
+  if(!userId){ alert("Register first"); return; }
+  try{
+    const data = await api(`/users/${userId}/run/stop`,'POST',{});
+    setOut(data);
+  }catch(e){ setOut({error:e.message}); }
+};
+
+// View history
+$('#btnHistory').onclick = async ()=>{
+  if(!userId){ alert("Register first"); return; }
+  try{
+    const data = await api(`/users/${userId}/history`);
+    setOut(data);
+  }catch(e){ setOut({error:e.message}); }
+};
+</script>
+</body>
+</html>
