@@ -135,6 +135,59 @@ class Runner(User):
 
     def getSessionHistory(self):
         return list(self.sessionHistory)
+class coachSession:
+    def __init__(self, sessionId):
+        self.sessionId = sessionId
+        self.startTime = None
+        self.endTime = None
+        self.totalDistance = 0.0
+        self.totalDuration = timedelta()
+        self.metrics = []
+
+    def begin(self):
+        if self.startTime is not None:
+            raise RuntimeError("Session already started")
+        self.startTime = datetime.now()
+        print(f"Coach session {self.sessionId} started at {self.startTime}")
+
+    def record_metric(self, metric):
+        if not isinstance(metric, RunMetric):
+            raise TypeError("metric must be an instance of RunMetric")
+        if self.startTime is None:
+            self.begin()
+        self.metrics.append(metric)
+        self.totalDistance += metric.distance
+        self.totalDuration += metric.duration
+        return self.totalDistance, self.totalDuration
+
+    def finish(self):
+        if self.startTime is None:
+            raise RuntimeError("Session was never started")
+        if self.endTime is None:
+            self.endTime = datetime.now()
+        print(f"Coach session {self.sessionId} ended at {self.endTime}")
+        summary = self.summary()
+        self.reset()
+        return summary
+
+    def summary(self):
+        effective_duration = self.totalDuration
+        if effective_duration == timedelta() and self.startTime and self.endTime:
+            effective_duration = self.endTime - self.startTime
+        return {
+            "session_id": self.sessionId,
+            "started_at": self.startTime,
+            "ended_at": self.endTime,
+            "total_distance": self.totalDistance,
+            "total_duration": effective_duration,
+        } # This is a dictionary that is used to return the summary of the session in JSON
+
+    def reset(self):
+        self.startTime = None
+        self.endTime = None
+        self.totalDistance = 0.0
+        self.totalDuration = timedelta()
+        self.metrics.clear()
 
 class Coach(User):
     def __init__(self, name, session_factory=None):
@@ -168,6 +221,10 @@ class RunnerSessionFactory:
         session_id = uuid.uuid4().hex
         return runnerSession(session_id)
 
+class CoachSessionFactory:
+    def create_session(self):
+        session_id = uuid.uuid4().hex
+        return coachSession(session_id)
 
 class UserFactory:
     def __init__(self, session_factory=None):
@@ -179,4 +236,5 @@ class UserFactory:
             return Runner(name, session_factory=self.session_factory)
         if role == "coach":
             return Coach(name, session_factory=self.session_factory)
+
         raise ValueError(f"Unsupported role: {role}")
