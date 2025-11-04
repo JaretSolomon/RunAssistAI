@@ -192,7 +192,7 @@ class coachSession:
 class Coach(User):
     def __init__(self, name, session_factory=None):
         self.name = name
-        self.session_factory = session_factory or RunnerSessionFactory()
+        self.session_factory = session_factory or CoachSessionFactory()
         self.currentSession = None
         self.sessionHistory = []
 
@@ -227,14 +227,17 @@ class CoachSessionFactory:
         return coachSession(session_id)
 
 class UserFactory:
-    def __init__(self, session_factory=None):
-        self.session_factory = session_factory or RunnerSessionFactory()
+    def __init__(self, session_factory=None, coach_session_factory=None):
+        self.runner_session_factory = session_factory or RunnerSessionFactory()
+        self.coach_session_factory = (
+            coach_session_factory or session_factory or CoachSessionFactory()
+        )
 
     def create_user(self, role, name):
         role = role.lower()
         if role == "runner":
-            return Runner(name, session_factory=self.session_factory)
+            return Runner(name, session_factory=self.runner_session_factory)
         if role == "coach":
-            return Coach(name, session_factory=self.session_factory)
+            return Coach(name, session_factory=self.coach_session_factory)
 
         raise ValueError(f"Unsupported role: {role}")

@@ -1,98 +1,84 @@
 import sys
 from pathlib import Path
-
-import pytest
+import unittest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from Main import Coach, RunnerSessionFactory, User, UserFactory, runnerSession
+from Main import Coach, CoachSessionFactory, User, UserFactory, coachSession  # noqa: E402
 
 
-class DummySessionFactory:
-    def __init__(self):
-        
-        self.created = []
-
+class DummyCoachSessionFactory:
     def create_session(self):
-        session = object()
-        self.created.append(session)
-        return session
+        return object()
 
 
-def test_factory_creates_coach_instance():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
+class TestCoachFactory(unittest.TestCase):
+    def test_factory_creates_coach_instance(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-    assert isinstance(user, Coach)
+        self.assertIsInstance(user, Coach)
 
+    def test_factory_sets_coach_name(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-def test_factory_sets_coach_name():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
+        self.assertEqual(user.name, "Jess")
 
-    assert user.name == "Jess"
+    def test_factory_role_case_insensitive_for_coach(self):
+        factory = UserFactory()
+        user = factory.create_user("COACH", "Pat")
 
+        self.assertIsInstance(user, Coach)
 
-def test_factory_role_case_insensitive_for_coach():
-    factory = UserFactory()
-    user = factory.create_user("COACH", "Pat")
+    def test_factory_returns_distinct_coach_instances(self):
+        factory = UserFactory()
+        first = factory.create_user("coach", "Jess")
+        second = factory.create_user("coach", "Jess")
 
-    assert isinstance(user, Coach)
+        self.assertIsNot(first, second)
 
+    def test_factory_provides_default_session_factory_for_coach(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-def test_factory_returns_distinct_coach_instances():
-    factory = UserFactory()
+        self.assertIsInstance(user.session_factory, CoachSessionFactory)
 
-    first = factory.create_user("coach", "Jess")
-    second = factory.create_user("coach", "Jess")
+    def test_factory_assigns_injected_session_factory_to_coach(self):
+        dummy_factory = DummyCoachSessionFactory()
+        factory = UserFactory(coach_session_factory=dummy_factory)
 
-    assert first is not second
+        user = factory.create_user("coach", "Jess")
 
+        self.assertIs(user.session_factory, dummy_factory)
 
-def test_factory_provides_default_session_factory_for_coach():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
+    def test_coach_session_factory_creates_coach_session(self):
+        session_factory = CoachSessionFactory()
+        session = session_factory.create_session()
 
-    assert isinstance(user.session_factory, RunnerSessionFactory)
+        self.assertIsInstance(session, coachSession)
 
+    def test_factory_coach_initial_session_history_empty(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-def test_factory_assigns_injected_session_factory_to_coach():
-    dummy_factory = DummySessionFactory()
-    factory = UserFactory(session_factory=dummy_factory)
+        self.assertEqual(user.sessionHistory, [])
 
-    user = factory.create_user("coach", "Jess")
+    def test_factory_coach_current_session_starts_none(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-    assert user.session_factory is dummy_factory
+        self.assertIsNone(user.currentSession)
 
+    def test_factory_coach_is_user_subclass(self):
+        factory = UserFactory()
+        user = factory.create_user("coach", "Jess")
 
-def test_factory_coach_session_factory_creates_runner_session():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
-
-    session = user.session_factory.create_session()
-
-    assert isinstance(session, runnerSession)
-
-
-def test_factory_coach_initial_session_history_empty():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
-
-    assert user.sessionHistory == []
-
-
-def test_factory_coach_current_session_starts_none():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
-
-    assert user.currentSession is None
+        self.assertIsInstance(user, User)
 
 
-def test_factory_coach_is_user_subclass():
-    factory = UserFactory()
-    user = factory.create_user("coach", "Jess")
-
-    assert isinstance(user, User)
+if __name__ == "__main__":
+    unittest.main()
