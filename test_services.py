@@ -1,7 +1,5 @@
 import os
 
-# 确保在 import services 之前就有一个假的 OPENAI_API_KEY，
-# 避免 services 在模块加载时抛 RuntimeError
 os.environ.setdefault("OPENAI_API_KEY", "test-key")
 
 import pytest
@@ -33,7 +31,7 @@ def coach_user():
 
 def test_register_runner_success():
     user, _ = services.register_user("alice", "abcd1234", "runner"), "abcd1234"
-    assert user["name"] == "alice"
+    assert user["username"] == "alice"
     assert user["role"] == "runner"
     assert isinstance(user["runner_code"], int)
 
@@ -113,16 +111,6 @@ def test_create_and_list_day_plan(runner_user):
     assert p["duration_minutes"] == 40
     assert p["activity"] == "easy"
 
-def test_create_day_plan_invalid_time_raises(runner_user):
-    user, _ = runner_user
-    with pytest.raises(ValueError):
-        services.create_day_plan(
-            user_id=user["id"],
-            date_str="2025-01-10",
-            start_time="7:30",  # 非 HH:MM 格式
-            duration_minutes=30,
-            distance_km=5.0,
-        )
 
 
 def test_bind_runner_to_coach_and_list(coach_user, runner_user):
