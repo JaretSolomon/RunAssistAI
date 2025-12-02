@@ -215,6 +215,89 @@ export interface CoachNote {
   created_at: string; // ISO string
 }
 
+// -------- Strava integration types --------
+
+export interface StravaLinkResponse {
+  authorize_url: string;
+  state: string;
+}
+
+export interface StravaStatusResponse {
+  linked: boolean;
+  athlete_id?: number | null;
+  scope?: string | null;
+  last_sync?: string | null;
+  last_sync_cursor?: number | null;
+  expires_at?: number | null;
+  access_token_valid?: boolean;
+}
+
+export interface StravaSyncResponse {
+  user_id: string;
+  athlete_id?: number | null;
+  imported_sessions: number;
+  skipped_activities: number;
+  last_sync_cursor?: number | null;
+  last_activity_at?: string | null;
+  synced_at?: string | null;
+}
+
+// -------- Recent runs --------
+export interface RecentRun {
+  id: string;
+  started_at: string;
+  ended_at?: string | null;
+  total_distance_km: number;
+  total_duration_seconds: number;
+  total_calories: number;
+}
+
+export interface RecentRunsResponse {
+  user_id: string;
+  count: number;
+  sessions: RecentRun[];
+}
+
+export interface StravaRecentRun {
+  id: string;
+  strava_activity_id: number;
+  session_id?: string | null;
+  started_at?: string | null;
+  distance_km: number;
+  duration_seconds: number;
+  calories?: number | null;
+  cadence?: number | null;
+  recorded_at?: string | null;
+}
+
+export interface StravaRunDetail {
+  strava_activity_id: number;
+  started_at?: string | null;
+  distance_km: number;
+  duration_seconds: number;
+  average_pace_seconds?: number | null;
+  calories?: number | null;
+  average_heartrate?: number | null;
+  max_heartrate?: number | null;
+  average_cadence?: number | null;
+  total_elevation_gain?: number | null;
+  average_speed?: number | null;
+  average_watts?: number | null;
+  splits: Array<{
+    index: number;
+    distance_km: number;
+    duration_seconds: number;
+    pace_seconds?: number | null;
+    cadence?: number | null;
+  }>;
+  pace_cadence_series: Array<{
+    time_seconds: number;
+    time_label: string;
+    pace_seconds?: number | null;
+    cadence?: number | null;
+  }>;
+}
+
 // =====================================
 // Generic request wrapper
 // =====================================
@@ -504,4 +587,61 @@ export async function createCoachNoteApi(
     method: "POST",
     body: JSON.stringify({ content }),
   });
+}
+
+// =====================================
+// Strava integration
+// =====================================
+
+export async function requestStravaLink(
+  userId: string
+): Promise<StravaLinkResponse> {
+  return request<StravaLinkResponse>(`/api/strava/link/${userId}`, {
+    method: "POST",
+  });
+}
+
+export async function fetchStravaStatus(
+  userId: string
+): Promise<StravaStatusResponse> {
+  return request<StravaStatusResponse>(`/api/strava/status/${userId}`);
+}
+
+export async function triggerStravaSync(
+  userId: string
+): Promise<StravaSyncResponse> {
+  return request<StravaSyncResponse>(`/api/strava/sync/${userId}`, {
+    method: "POST",
+  });
+}
+
+export async function fetchRecentRuns(
+  userId: string,
+  limit = 5
+): Promise<RecentRunsResponse> {
+  const q = `?limit=${limit}`;
+  return request<RecentRunsResponse>(`/api/run/recent/${userId}${q}`);
+}
+
+export async function fetchStravaRuns(
+  userId: string,
+  limit = 10,
+  sync = false
+): Promise<StravaRecentRun[]> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    sync: String(sync),
+  });
+  return request<StravaRecentRun[]>(
+    `/api/strava/runs/${userId}?${params.toString()}`
+  );
+}
+
+export async function fetchStravaRunDetail(
+  userId: string,
+  activityId: number
+): Promise<StravaRunDetail> {
+  return request<StravaRunDetail>(
+    `/api/strava/run/${userId}/${activityId}`
+  );
 }
