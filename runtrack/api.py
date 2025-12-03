@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Optional, List, Literal
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -127,82 +126,6 @@ class CoachNoteOut(BaseModel):
     coach_name: Optional[str] = None
     content: str
     created_at: str
-
-
-class StravaLinkOut(BaseModel):
-    authorize_url: str
-    state: str
-
-
-class StravaStatusOut(BaseModel):
-    linked: bool
-    athlete_id: Optional[int] = None
-    scope: Optional[str] = None
-    last_sync: Optional[str] = None
-    last_sync_cursor: Optional[int] = None
-    expires_at: Optional[int] = None
-    access_token_valid: Optional[bool] = None
-
-
-class StravaSyncOut(BaseModel):
-    user_id: str
-    athlete_id: Optional[int] = None
-    imported_sessions: int
-    skipped_activities: int
-    last_sync_cursor: Optional[int] = None
-    last_activity_at: Optional[str] = None
-    synced_at: Optional[str] = None
-
-
-class RecentRunSession(BaseModel):
-    id: str
-    started_at: str
-    ended_at: Optional[str]
-    total_distance_km: float
-    total_duration_seconds: int
-    total_calories: float
-
-
-class RecentRunsOut(BaseModel):
-    user_id: str
-    count: int
-    sessions: List[RecentRunSession]
-
-
-class StravaRunOut(BaseModel):
-    id: str
-    strava_activity_id: int
-    session_id: Optional[str] = None
-    started_at: Optional[str] = None
-    distance_km: float
-    duration_seconds: int
-    calories: Optional[float] = None
-    cadence: Optional[float] = None
-    recorded_at: Optional[str] = None
-
-
-class StravaSplitOut(BaseModel):
-    index: int
-    distance_km: float
-    duration_seconds: int
-    pace_seconds: Optional[int] = None
-
-
-class StravaRunDetailOut(BaseModel):
-    strava_activity_id: int
-    started_at: Optional[str] = None
-    distance_km: float
-    duration_seconds: int
-    average_pace_seconds: Optional[int] = None
-    calories: Optional[float] = None
-    average_heartrate: Optional[float] = None
-    max_heartrate: Optional[float] = None
-    average_cadence: Optional[float] = None
-    total_elevation_gain: Optional[float] = None
-    average_speed: Optional[float] = None
-    average_watts: Optional[float] = None
-    splits: List[StravaSplitOut]
-    pace_cadence_series: List[Dict[str, Any]]
 
 
 # ---------- Users / Auth / Dashboard ----------
@@ -461,70 +384,15 @@ def api_apply_ai_weekly_plan(user_id: str, payload: AiPlanApplyIn):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-
-@app.post("/api/strava/link/{user_id}", response_model=StravaLinkOut)
-def api_strava_link(user_id: str):
+@app.post("/api/coach/{coach_id}/bind_runner", response_model=BoundRunnerOut)
+def api_coach_bind_runner(coach_id: str, body: CoachBindRunnerIn):
     try:
-        return services.get_strava_authorize_link(user_id)
+        res = services.bind_runner_to_coach(coach_id, body.runner_code)
+        # services returns: {"coach_id": ..., "runner": {...}}
+        return BoundRunnerOut(**res["runner"])
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.get("/api/strava/status/{user_id}", response_model=StravaStatusOut)
-def api_strava_status(user_id: str):
-    try:
-        return services.get_strava_status(user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/api/strava/sync/{user_id}", response_model=StravaSyncOut)
-def api_strava_sync(user_id: str):
-    try:
-        return services.strava_sync_runner(user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.get("/api/strava/callback")
-def api_strava_callback(code: str, state: str, scope: Optional[str] = None):
-    try:
-        result = services.handle_strava_callback(code=code, state=state, scope=scope)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    redirect_url = services.get_strava_post_auth_redirect()
-    separator = "&" if "?" in redirect_url else "?"
-    target = f"{redirect_url}{separator}strava_linked=1&user_id={result['user_id']}"
-    return RedirectResponse(url=target)
-
 
 @app.get("/api/health")
 def api_health():
     return {"status": "ok"}
-
-
-@app.get("/api/run/recent/{user_id}", response_model=RecentRunsOut)
-def api_recent_runs(user_id: str, limit: int = 5):
-    try:
-        return services.get_recent_runs(user_id, limit)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.get("/api/strava/runs/{user_id}", response_model=List[StravaRunOut])
-def api_recent_strava_runs(user_id: str, limit: int = 5, sync: bool = False):
-    try:
-        return services.get_recent_strava_runs(user_id, limit, sync)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.get(
-    "/api/strava/run/{user_id}/{activity_id}", response_model=StravaRunDetailOut
-)
-def api_strava_run_detail(user_id: str, activity_id: int):
-    try:
-        return services.get_strava_run_detail(user_id, activity_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
