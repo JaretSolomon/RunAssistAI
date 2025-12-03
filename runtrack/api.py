@@ -384,6 +384,14 @@ def api_apply_ai_weekly_plan(user_id: str, payload: AiPlanApplyIn):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.post("/api/coach/{coach_id}/bind_runner", response_model=BoundRunnerOut)
+def api_coach_bind_runner(coach_id: str, body: CoachBindRunnerIn):
+    try:
+        res = services.bind_runner_to_coach(coach_id, body.runner_code)
+        # services returns: {"coach_id": ..., "runner": {...}}
+        return BoundRunnerOut(**res["runner"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/health")
 def api_health():
