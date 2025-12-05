@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 import random
 
@@ -14,6 +14,21 @@ def _utcnow_iso() -> str:
     and a trailing 'Z', e.g. '2025-11-23T12:34:56Z'.
     """
     return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+
+
+def _text_id(value: Any) -> str:
+    """
+    Ensure IDs passed to SQLite are plain strings.
+    """
+    if value is None:
+        raise ValueError("user_id cannot be None")
+    if isinstance(value, str):
+        return value
+    # Handle UUID objects and other types
+    result = str(value).strip()
+    if not result:
+        raise ValueError("user_id cannot be empty")
+    return result
 
 
 class Repo:
@@ -49,7 +64,8 @@ class Repo:
                 username TEXT UNIQUE NOT NULL,
                 role TEXT NOT NULL,
                 runner_code INTEGER,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                password_hash TEXT
             )
             """
         )
@@ -59,7 +75,7 @@ class Repo:
             """
             CREATE TABLE IF NOT EXISTS user_settings (
                 user_id TEXT PRIMARY KEY,
-                calories_per_hour REAL NOT NULL,
+                calories_per_hour REAL NOT NULL,  
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
             """
@@ -210,6 +226,45 @@ class Repo:
             """
         )
 
+        # Strava credentials per runner
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS strava_credentials (
+                user_id TEXT PRIMARY KEY,
+                athlete_id INTEGER NOT NULL,
+                access_token TEXT NOT NULL,
+                refresh_token TEXT NOT NULL,
+                expires_at INTEGER NOT NULL,
+                scope TEXT,
+                last_sync TEXT,
+                last_sync_cursor INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+            """
+        )
+
+        # Imported Strava activities to avoid duplicates
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS strava_activity_imports (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                strava_activity_id INTEGER NOT NULL,
+                session_id TEXT NOT NULL,
+                activity_start TEXT,
+                distance_km REAL,
+                moving_time INTEGER,
+                payload_json TEXT,
+                imported_at TEXT NOT NULL,
+                UNIQUE(user_id, strava_activity_id),
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (session_id) REFERENCES sessions(id)
+            )
+            """
+        )
+
         self.conn.commit()
 
     # ---------- users ----------
@@ -231,9 +286,9 @@ class Repo:
             runner_code = self._generate_unique_runner_code()
 
         cur.execute(
-            "INSERT INTO users(id, username, role, runner_code, created_at) VALUES (?,?,?,?,?)",
-            (user_id, username, role, runner_code, now),
-        )
+            "INSERT INTO users(id, username, role, runner_code, created_at, password_hash) VALUES (?,?,?,?,?,?)",
+            (user_id, username, role, runner_code, now, None),
+      )
         self.conn.commit()
         return {
             "id": user_id,
@@ -249,7 +304,7 @@ class Repo:
         row = cur.fetchone()
         return dict(row) if row else None
 
-    def create_user(self, username: str, role: str) -> Dict[str, Any]:
+    def create_user(self, username: str, role: str, password_hash: str) -> Dict[str, Any]:
         if role not in ("runner", "coach"):
             raise ValueError("role must be 'runner' or 'coach'")
 
@@ -267,10 +322,10 @@ class Repo:
         cur = self.conn.cursor()
         cur.execute(
             """
-            INSERT INTO users(id, username, role, runner_code, created_at)
-            VALUES (?,?,?,?,?)
+            INSERT INTO users(id, username, role, runner_code, created_at, password_hash)
+            VALUES (?,?,?,?,?,?)
             """,
-            (user_id, username, role, runner_code, now),
+            (user_id, username, role, runner_code, now, password_hash),
         )
         self.conn.commit()
 
@@ -283,16 +338,28 @@ class Repo:
         }
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
         cur = self.conn.cursor()
-        cur.execute("SELECT * FROM users WHERE id=?", (user_id,))
+        # Use a list instead of tuple - some SQLite versions prefer this
+        cur.execute("SELECT * FROM users WHERE id=?", [normalized])
         row = cur.fetchone()
         return dict(row) if row else None
 
     # ---------- settings ----------
 
     def get_or_create_user_settings(self, user_id: str) -> Dict[str, Any]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
         cur = self.conn.cursor()
-        cur.execute("SELECT * FROM user_settings WHERE user_id=?", (user_id,))
+        # Use a list instead of tuple - some SQLite versions prefer this
+        cur.execute("SELECT * FROM user_settings WHERE user_id=?", [normalized])
         row = cur.fetchone()
         if row:
             return {
@@ -300,14 +367,26 @@ class Repo:
                 "calories_per_hour": row["calories_per_hour"],
             }
 
-        cur.execute(
-            "INSERT INTO user_settings(user_id, calories_per_hour) VALUES (?, ?)",
-            (user_id, 600.0),
-        )
-        self.conn.commit()
+        try:
+            cur.execute(
+                "INSERT INTO user_settings(user_id, calories_per_hour) VALUES (?, ?)",
+                [normalized, 600.0],
+            )
+            self.conn.commit()
+        except sqlite3.IntegrityError:
+            self.conn.rollback()
+            cur.execute("SELECT * FROM user_settings WHERE user_id=?", [normalized])
+            row = cur.fetchone()
+            if row:
+                return {
+                    "user_id": row["user_id"],
+                    "calories_per_hour": row["calories_per_hour"],
+                }
+            raise
         return {"user_id": user_id, "calories_per_hour": 600.0}
 
     def update_user_calories_per_hour(self, user_id: str, value: float) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -323,6 +402,7 @@ class Repo:
     # ---------- sessions / metrics ----------
 
     def get_active_session(self, user_id: str) -> Optional[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -342,6 +422,7 @@ class Repo:
         note: Optional[str],
         calories_per_hour: float,
     ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         if self.get_active_session(user_id):
             raise ValueError("Active session already exists")
 
@@ -470,8 +551,13 @@ class Repo:
     # ---------- history ----------
 
     def fetch_history_by_user_id(self, user_id: str, limit: int) -> Dict[str, Any]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
         cur = self.conn.cursor()
-        cur.execute("SELECT * FROM users WHERE id=?", (user_id,))
+        cur.execute("SELECT * FROM users WHERE id=?", [normalized])
         user = cur.fetchone()
         if not user:
             return {
@@ -479,7 +565,7 @@ class Repo:
                 "username": None,
                 "count": 0,
                 "sessions": [],
-            }
+            } #Dashboard Data
 
         cur.execute(
             """
@@ -488,7 +574,7 @@ class Repo:
             ORDER BY started_at DESC
             LIMIT ?
             """,
-            (user_id, limit),
+            [normalized, limit],
         )
         sessions_rows = cur.fetchall()
         sessions: List[Dict[str, Any]] = []
@@ -522,7 +608,7 @@ class Repo:
 
     def fetch_recent_for_prompt_by_user_id(self, user_id: str, last_n: int) -> Dict[str, Any]:
         return self.fetch_history_by_user_id(user_id, last_n)
-
+#Strava Dashboard
     # ---------- training plans ----------
 
     def create_plan(
@@ -535,6 +621,7 @@ class Repo:
         meta_json: Optional[Dict[str, Any]],
         entries: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         plan_id = uuid.uuid4().hex
         now = _utcnow_iso()
         cur = self.conn.cursor()
@@ -592,6 +679,7 @@ class Repo:
         return self.get_plan_with_entries(plan_id)
 
     def list_plans_by_user_id(self, user_id: str, limit: int) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -636,19 +724,28 @@ class Repo:
 
     # ---------- stats helpers ----------
 
-    def stats_overview(self, user_id: str, since_iso: str) -> Dict[str, Any]:
+    def stats_overview(
+        self, user_id: str, since_iso: str, only_strava: bool = False
+    ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
-        cur.execute(
-            """
+        query = """
             SELECT
               COUNT(*) AS total_sessions,
               COALESCE(SUM(total_distance_km), 0) AS total_distance_km,
               COALESCE(SUM(total_duration_seconds), 0) AS total_duration_seconds
             FROM sessions
             WHERE user_id=? AND started_at>=?
-            """,
-            (user_id, since_iso),
-        )
+        """
+        params: List[Any] = [user_id, since_iso]
+        if only_strava:
+            query += """
+            AND EXISTS (
+                SELECT 1 FROM strava_activity_imports sai
+                WHERE sai.session_id = sessions.id
+            )
+            """
+        cur.execute(query, params)
         row = cur.fetchone()
         return {
             "total_sessions": row["total_sessions"],
@@ -656,10 +753,12 @@ class Repo:
             "total_duration_seconds": row["total_duration_seconds"],
         }
 
-    def stats_daily(self, user_id: str, since_iso: str) -> List[Dict[str, Any]]:
+    def stats_daily(
+        self, user_id: str, since_iso: str, only_strava: bool = False
+    ) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
-        cur.execute(
-            """
+        query = """
             SELECT
               substr(started_at, 1, 10) AS date,
               COUNT(*) AS sessions,
@@ -669,24 +768,40 @@ class Repo:
             WHERE user_id=? AND started_at>=?
             GROUP BY date
             ORDER BY date
-            """,
-            (user_id, since_iso),
-        )
+        """
+        params: List[Any] = [user_id, since_iso]
+        if only_strava:
+            query += """
+            AND EXISTS (
+                SELECT 1 FROM strava_activity_imports sai
+                WHERE sai.session_id = sessions.id
+            )
+            """
+        cur.execute(query, params)
         return [dict(r) for r in cur.fetchall()]
 
-    def stats_sessions_since(self, user_id: str, since_iso: str) -> List[Dict[str, Any]]:
+    def stats_sessions_since(
+        self, user_id: str, since_iso: str, only_strava: bool = False
+    ) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
-        cur.execute(
-            """
+        query = """
             SELECT
               id, user_id, started_at,
               total_distance_km, total_duration_seconds, total_calories
             FROM sessions
             WHERE user_id=? AND started_at>=?
             ORDER BY started_at
-            """,
-            (user_id, since_iso),
-        )
+        """
+        params: List[Any] = [user_id, since_iso]
+        if only_strava:
+            query += """
+            AND EXISTS (
+                SELECT 1 FROM strava_activity_imports sai
+                WHERE sai.session_id = sessions.id
+            )
+            """
+        cur.execute(query, params)
         return [dict(r) for r in cur.fetchall()]
 
     def fetch_sessions_between(
@@ -694,16 +809,29 @@ class Repo:
         user_id: str,
         start_iso: str,
         end_iso: str,
+        only_strava: bool = False,
     ) -> List[Dict[str, Any]]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
         cur = self.conn.cursor()
-        cur.execute(
-            """
+        query = """
             SELECT * FROM sessions
             WHERE user_id=? AND started_at>=? AND started_at<?
             ORDER BY started_at
-            """,
-            (user_id, start_iso, end_iso),
-        )
+        """
+        # Ensure all params are proper strings
+        params: List[Any] = [normalized, str(start_iso), str(end_iso)]
+        if only_strava:
+            query += """
+            AND EXISTS (
+                SELECT 1 FROM strava_activity_imports sai
+                WHERE sai.session_id = sessions.id
+            )
+            """
+        cur.execute(query, params)
         return [dict(r) for r in cur.fetchall()]
 
     def fetch_daily_aggregates_between(
@@ -711,10 +839,11 @@ class Repo:
         user_id: str,
         start_iso: str,
         end_iso: str,
+        only_strava: bool = False,
     ) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
-        cur.execute(
-            """
+        query = """
             SELECT
               substr(started_at, 1, 10) AS date,
               COUNT(*) AS sessions,
@@ -725,14 +854,22 @@ class Repo:
             WHERE user_id=? AND started_at>=? AND started_at<?
             GROUP BY date
             ORDER BY date
-            """,
-            (user_id, start_iso, end_iso),
-        )
+        """
+        params: List[Any] = [user_id, start_iso, end_iso]
+        if only_strava:
+            query += """
+            AND EXISTS (
+                SELECT 1 FROM strava_activity_imports sai
+                WHERE sai.session_id = sessions.id
+            )
+            """
+        cur.execute(query, params)
         return [dict(r) for r in cur.fetchall()]
 
     # ---------- weekly plan rule (legacy interface) ----------
 
     def get_weekly_plan_rule_or_default(self, user_id: str) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             "SELECT * FROM weekly_plan_rules WHERE user_id=?",
@@ -774,6 +911,11 @@ class Repo:
         duration_minutes: int,
         distance_km: float,
     ) -> Dict[str, Any]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
         now = _utcnow_iso()
         cur = self.conn.cursor()
         cur.execute(
@@ -790,10 +932,10 @@ class Repo:
               distance_km=excluded.distance_km,
               updated_at=excluded.updated_at
             """,
-            (uuid.uuid4().hex, user_id, weekday, start_time, duration_minutes, distance_km, now, now),
+            (uuid.uuid4().hex, normalized, weekday, start_time, duration_minutes, distance_km, now, now),
         )
         self.conn.commit()
-        cur.execute("SELECT * FROM weekly_plan_rules WHERE user_id=?", (user_id,))
+        cur.execute("SELECT * FROM weekly_plan_rules WHERE user_id=?", [normalized])
         return dict(cur.fetchone())
 
     # ---------- daily running plan ----------
@@ -808,6 +950,7 @@ class Repo:
         activity: Optional[str],
         description: Optional[str] = None,
     ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
         pid = uuid.uuid4().hex
         now = _utcnow_iso()
         cur = self.conn.cursor()
@@ -836,6 +979,7 @@ class Repo:
         return dict(cur.fetchone())
 
     def delete_daily_plan(self, user_id: str, plan_id: str) -> None:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             "DELETE FROM daily_running_plan WHERE id=? AND user_id=?",
@@ -849,6 +993,7 @@ class Repo:
         start_date: str,
         end_date: str,
     ) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -865,6 +1010,7 @@ class Repo:
         user_id: str,
         date_str: str,
     ) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -953,6 +1099,7 @@ class Repo:
         return dict(cur.fetchone())
 
     def list_coach_notes_for_runner(self, runner_id: str) -> List[Dict[str, Any]]:
+        runner_id = _text_id(runner_id)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -963,3 +1110,243 @@ class Repo:
             (runner_id,),
         )
         return [dict(r) for r in cur.fetchall()]
+
+    # ---------- Strava integration ----------
+
+    def upsert_strava_credentials(
+        self,
+        user_id: str,
+        athlete_id: int,
+        access_token: str,
+        refresh_token: str,
+        expires_at: int,
+        scope: Optional[str],
+    ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
+        now = _utcnow_iso()
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO strava_credentials(
+                user_id, athlete_id, access_token, refresh_token,
+                expires_at, scope, last_sync, last_sync_cursor,
+                created_at, updated_at
+            )
+            VALUES(?,?,?,?,?,?,NULL,NULL,?,?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                athlete_id=excluded.athlete_id,
+                access_token=excluded.access_token,
+                refresh_token=excluded.refresh_token,
+                expires_at=excluded.expires_at,
+                scope=excluded.scope,
+                updated_at=excluded.updated_at
+            """,
+            (user_id, athlete_id, access_token, refresh_token, expires_at, scope, now, now),
+        )
+        self.conn.commit()
+        return self.get_strava_credentials(user_id)
+
+    def get_strava_credentials(self, user_id: str) -> Optional[Dict[str, Any]]:
+        # Normalize to ensure it's a plain string
+        normalized = _text_id(user_id)
+        # SQLite requires plain Python strings, ensure we have one
+        if not isinstance(normalized, str):
+            normalized = str(normalized)
+        cur = self.conn.cursor()
+        # Use a list instead of tuple - some SQLite versions prefer this
+        cur.execute("SELECT * FROM strava_credentials WHERE user_id=?", [normalized])
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+    def update_strava_tokens(
+        self,
+        user_id: str,
+        access_token: str,
+        refresh_token: str,
+        expires_at: int,
+    ) -> None:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            UPDATE strava_credentials
+            SET access_token=?, refresh_token=?, expires_at=?, updated_at=?
+            WHERE user_id=?
+            """,
+            (access_token, refresh_token, expires_at, _utcnow_iso(), user_id),
+        )
+        self.conn.commit()
+
+    def touch_strava_sync(
+        self,
+        user_id: str,
+        last_sync_cursor: Optional[int],
+        last_sync_iso: Optional[str],
+    ) -> None:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            UPDATE strava_credentials
+            SET last_sync=?, last_sync_cursor=?, updated_at=?
+            WHERE user_id=?
+            """,
+            (last_sync_iso, last_sync_cursor, _utcnow_iso(), user_id),
+        )
+        self.conn.commit()
+
+    def has_imported_strava_activity(self, user_id: str, activity_id: int) -> bool:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT 1 FROM strava_activity_imports
+            WHERE user_id=? AND strava_activity_id=?
+            """,
+            (user_id, activity_id),
+        )
+        return cur.fetchone() is not None
+
+    def record_strava_activity_import(
+        self,
+        user_id: str,
+        activity_id: int,
+        session_id: str,
+        activity_start: Optional[str],
+        distance_km: float,
+        moving_time: int,
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO strava_activity_imports(
+                id, user_id, strava_activity_id, session_id,
+                activity_start, distance_km, moving_time,
+                payload_json, imported_at
+            )
+            VALUES(?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                uuid.uuid4().hex,
+                user_id,
+                activity_id,
+                session_id,
+                activity_start,
+                distance_km,
+                moving_time,
+                json.dumps(payload) if payload is not None else None,
+                _utcnow_iso(),
+            ),
+        )
+        self.conn.commit()
+
+    def fetch_recent_strava_runs(self, user_id: str, limit: int) -> List[Dict[str, Any]]:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                sai.id AS import_id,
+                sai.strava_activity_id,
+                sai.activity_start,
+                sai.distance_km,
+                sai.moving_time,
+                sai.imported_at,
+                sai.payload_json,
+                s.id AS session_id,
+                s.started_at,
+                s.total_distance_km,
+                s.total_duration_seconds,
+                s.total_calories
+            FROM strava_activity_imports sai
+            JOIN sessions s ON s.id = sai.session_id
+            WHERE sai.user_id=?
+            ORDER BY sai.activity_start DESC, sai.imported_at DESC
+            LIMIT ?
+            """,
+            (user_id, limit),
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def create_session_from_import(
+        self,
+        user_id: str,
+        started_at_iso: str,
+        duration_seconds: int,
+        distance_km: float,
+        calories_per_hour: float,
+        note: Optional[str] = None,
+        calories_total: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        user_id = _text_id(user_id)
+        sid = uuid.uuid4().hex
+        try:
+            dt = datetime.fromisoformat(started_at_iso.replace("Z", "+00:00"))
+        except ValueError:
+            dt = datetime.utcnow()
+        ended_dt = dt + timedelta(seconds=max(0, duration_seconds))
+        ended_iso = ended_dt.isoformat().replace("+00:00", "Z")
+
+        total_hours = max(0.0, duration_seconds / 3600.0)
+        total_cal = (
+            float(calories_total)
+            if calories_total is not None
+            else total_hours * calories_per_hour
+        )
+
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO sessions(
+                id, user_id, started_at, ended_at,
+                total_distance_km, total_duration_seconds, total_calories,
+                calories_per_hour, note
+            )
+            VALUES(?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                sid,
+                user_id,
+                started_at_iso,
+                ended_iso,
+                distance_km,
+                duration_seconds,
+                total_cal,
+                calories_per_hour,
+                note,
+            ),
+        )
+        self.conn.commit()
+
+        # Store a single metric so summaries remain consistent
+        self.add_metric(
+            session_id=sid,
+            distance_km=distance_km,
+            duration_seconds=duration_seconds,
+            start_time=started_at_iso,
+            end_time=ended_iso,
+        )
+
+        cur.execute("SELECT * FROM sessions WHERE id=?", (sid,))
+        return dict(cur.fetchone())
+
+    def get_strava_activity_detail(
+        self, user_id: str, strava_activity_id: int
+    ) -> Optional[Dict[str, Any]]:
+        user_id = _text_id(user_id)
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT sai.*, s.total_calories, s.total_duration_seconds,
+                   s.total_distance_km, s.calories_per_hour, s.note
+            FROM strava_activity_imports sai
+            JOIN sessions s ON s.id = sai.session_id
+            WHERE sai.user_id=? AND sai.strava_activity_id=?
+            """,
+            (user_id, strava_activity_id),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
