@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap");
+
 :root {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "PingFang SC", "Segoe UI", sans-serif;
@@ -167,6 +169,18 @@ html,
   color: #f9fafb;
 }
 
+.sidebar-strava-block {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-strava-status {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
 .sidebar-bottom {
   font-size: 11px;
   color: #6b7280;
@@ -177,6 +191,43 @@ html,
   padding: 20px 22px 28px;
   background: #f3f4f6;
   overflow: auto;
+}
+
+.terminal-mode {
+  background: #030712;
+  color: #f8fafc;
+  font-family: "Roboto Mono", monospace;
+}
+
+.terminal-mode .card {
+  background: #050b16;
+  border: 1px solid rgba(45, 225, 162, 0.25);
+  box-shadow: 0 0 25px rgba(0, 255, 184, 0.08);
+}
+
+.terminal-mode .overview-item {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.terminal-mode .stat-label {
+  color: #f8fafc !important;
+}
+
+.terminal-mode .stat-value {
+  color: #f8fafc !important;
+}
+
+.terminal-mode .ring-main-value {
+  color: #f8fafc !important;
+}
+
+.terminal-mode .ring-sub-label {
+  color: #cbd5e1 !important;
+}
+
+.terminal-mode .ring-status-text {
+  color: #f8fafc !important;
 }
 
 .main-header {
@@ -244,6 +295,131 @@ html,
 
 .grid-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.terminal-ribbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: linear-gradient(90deg, #051937, #0b254a);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.25);
+}
+
+.terminal-ribbon-title {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  color: #67e8f9;
+}
+
+.terminal-ribbon-meta {
+  font-size: 12px;
+  color: #cbd5f5;
+}
+
+.terminal-ticker {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 12px;
+  background: rgba(3, 7, 18, 0.85);
+  margin-bottom: 18px;
+}
+
+.ticker-track {
+  display: inline-flex;
+  gap: 32px;
+  padding: 10px 0;
+  white-space: nowrap;
+  animation: ticker-scroll 28s linear infinite;
+}
+
+.ticker-item {
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.ticker-pos {
+  color: #34d399;
+}
+
+.ticker-neg {
+  color: #f87171;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.terminal-panels {
+  display: grid;
+  grid-template-columns: 3fr 1.6fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.terminal-card {
+  background: #050b16;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: inset 0 0 20px rgba(15, 118, 110, 0.2);
+}
+
+.terminal-card-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #cbd5f5;
+  margin-bottom: 8px;
+}
+
+.terminal-card-body {
+  min-height: 180px;
+}
+
+.sparkline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sparkline-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 70px;
+  align-items: center;
+  gap: 12px;
+}
+
+.sparkline-label {
+  font-size: 12px;
+  color: #fdf4ff;
+}
+
+.sparkline-chart {
+  height: 42px;
+}
+
+.sparkline-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #bef264;
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .terminal-panels {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -352,6 +528,122 @@ html,
   color: #b91c1c;
   padding: 8px 14px;
   font-size: 13px;
+}
+
+.error-text {
+  color: #fca5a5;
+}
+
+.recent-runs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-run-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f9fafb;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.terminal-mode .recent-runs-list .recent-run-row {
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5f5;
+}
+
+.recent-run-row.recent-run-strava {
+  border: 1px solid transparent;
+  background: rgba(8, 15, 28, 0.75);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  outline: none;
+}
+
+.recent-run-row.recent-run-strava:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+  transform: translateY(-1px);
+}
+
+.recent-run-row.recent-run-strava:focus-visible {
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.recent-run-row.recent-run-strava.strava-selected {
+  border-color: rgba(34, 211, 238, 0.8);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
+}
+
+.recent-run-time {
+  font-weight: 600;
+}
+
+.recent-run-distance,
+.recent-run-duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.strava-detail-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.strava-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.strava-detail-metric {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: #cbd5f5;
+}
+
+.strava-detail-metric span {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.strava-detail-metric strong {
+  font-size: 16px;
+  color: #f8fafc;
+}
+
+.strava-splits {
+  border-top: 1px solid rgba(59, 130, 246, 0.25);
+  padding-top: 12px;
+}
+
+.strava-split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  font-size: 12px;
+  padding: 4px 0;
+  color: #cbd5f5;
+}
+
+.strava-split-row.header {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: #94a3b8;
 }
 
 /* -------- Tabs (for overview/run record + inner tabs) -------- */
@@ -1050,13 +1342,13 @@ html,
 
 .ring-circle-bg {
   fill: none;
-  stroke: #edf0f4;
+  stroke: #9ea2a8;
   stroke-width: 18;
 }
 
 .ring-circle-progress {
   fill: none;
-  stroke: #4f8cff;
+  stroke: #4c8dff;
   stroke-width: 18;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.4s ease-out;
@@ -1779,3 +2071,1383 @@ html,
   color: #666;
   margin-top: 2px;
 }
+
+
+/* ---- Weekly plan form ---- */
+
+.runplan-week-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.runplan-week-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.runplan-week-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.runplan-week-row-last {
+  align-items: flex-end;
+}
+
+.runplan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.runplan-field span {
+  font-weight: 500;
+}
+
+.runplan-field input,
+.runplan-field select {
+  border-radius: 999px;
+  border: 1px solid #d0d5dd;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #f9fafb;
+}
+
+.runplan-field input:focus,
+.runplan-field select:focus {
+  outline: none;
+  border-color: #4c6fff;
+  box-shadow: 0 0 0 1px rgba(76, 111, 255, 0.25);
+  background: #ffffff;
+}
+
+.runplan-field-wide {
+  grid-column: 1 / -1;
+}
+
+
+.runplan-week-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.runplan-apply-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25);
+  transition:
+    background 0.15s ease,
+    transform 0.08s ease,
+    box-shadow 0.15s ease;
+}
+
+.runplan-apply-btn:hover {
+  background: #020617;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.28);
+}
+
+.runplan-apply-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+}
+
+.running-plan-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.running-plan-page .calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--text-main);
+}
+
+.running-plan-page .calendar-header span {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.running-plan-page .calendar-header button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+}
+
+.running-plan-page .calendar-header button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.running-plan-page .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.running-plan-page .calendar-weekday {
+  font-size: 0.8rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  margin-bottom: 0.25rem;
+}
+
+.running-plan-page .calendar-cell {
+  min-height: 110px;
+  border-radius: 12px;
+  background: radial-gradient(circle at top left, #0b1120, #020617 65%);
+  border: 1px solid var(--border-subtle);
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.06s ease,
+    background 0.2s ease;
+}
+
+.running-plan-page .calendar-cell:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.28);
+  transform: translateY(-1px);
+}
+
+.running-plan-page .calendar-cell-today {
+  box-shadow: 0 0 0 1px var(--accent-strong),
+    0 0 30px rgba(34, 211, 238, 0.35);
+}
+
+.running-plan-page .calendar-date {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.running-plan-page .calendar-no-plan {
+  margin-top: auto;
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+
+.running-plan-page .calendar-plan {
+  margin-top: 0.1rem;
+  padding: 0.25rem 0.3rem;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.25);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  font-size: 0.75rem;
+  color: var(--text-main);
+}
+
+.running-plan-page .calendar-plan-activity {
+  font-size: 0.7rem;
+  color: var(--text-soft);
+}
+
+.running-plan-page .calendar-plan-delete {
+  margin-top: 0.25rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0.16rem 0.5rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.running-plan-bottom {
+  margin-top: 0.5rem;
+}
+
+
+.running-plan-page .form-row,
+.runplan-week-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.runplan-week-hint {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  margin-bottom: 0.75rem;
+}
+
+.runplan-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+}
+
+.runplan-field span {
+  font-size: 0.72rem;
+}
+
+.running-plan-page input,
+.running-plan-page select,
+.running-plan-page textarea {
+  background: #020617;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.55rem;
+  color: var(--text-main);
+  font-size: 0.8rem;
+}
+
+.running-plan-page input:focus,
+.running-plan-page select:focus,
+.running-plan-page textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4);
+}
+
+.running-plan-page button,
+.runplan-apply-btn,
+.coach-notes-button,
+.ai-plan-actions button {
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: linear-gradient(135deg, #0f172a, #020617);
+  color: var(--text-main);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+}
+
+.running-plan-page button:hover:not(:disabled) {
+  background: radial-gradient(circle at top left, var(--accent-strong), #020617 70%);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.55);
+  transform: translateY(-1px);
+}
+
+.running-plan-page button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Coach notes */
+.coach-notes-textarea {
+  min-height: 90px;
+}
+
+.coach-notes-item {
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  border: 1px dashed var(--border-subtle);
+  background: rgba(15, 23, 42, 0.7);
+  margin-top: 0.55rem;
+}
+
+.coach-notes-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  margin-bottom: 2px;
+}
+
+.coach-notes-content {
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+/* AI preview */
+.ai-preview-day {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.9);
+  font-size: 0.8rem;
+}
+
+.ai-preview-desc {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: #020617;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95);
+  padding: 1.2rem 1.4rem;
+  color: var(--text-main);
+}
+
+/* === Unify Dashboard & RunningPlan under terminal-mode === */
+
+.main.terminal-mode {
+  background: radial-gradient(circle at top, #0b1220 0, #020617 55%, #000 100%);
+  color: #e5e7eb;
+}
+
+.main.terminal-mode .card {
+  background: rgba(3, 7, 18, 0.95);
+  border-radius: 18px;
+  border: 1px solid #0f172a;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.9);
+}
+
+.main.terminal-mode .running-plan-page {
+  padding: 0;
+}
+
+.main.terminal-mode .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.main.terminal-mode .calendar-header button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+.main.terminal-mode .calendar-weekday {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.main.terminal-mode .calendar-cell {
+  background: radial-gradient(circle at 0 0, #020617 0, #020617 40%, #020617 100%);
+  border-radius: 20px;
+  border: 1px solid #0f172a;
+  color: #f9fafb;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.main.terminal-mode .calendar-cell:hover {
+  border-color: #22d3ee;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.4),
+    0 18px 40px rgba(15, 23, 42, 0.9);
+  transform: translateY(-1px);
+}
+
+.main.terminal-mode .calendar-cell-today {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.8),
+    0 18px 40px rgba(15, 23, 42, 1);
+}
+
+.main.terminal-mode .calendar-date {
+  color: #e5e7eb;
+}
+
+.main.terminal-mode .calendar-no-plan {
+  color: #6b7280;
+}
+
+.main.terminal-mode .calendar-plan {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 12px;
+  padding: 6px 10px;
+  border: 1px solid #1e293b;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.main.terminal-mode .calendar-plan-delete {
+  margin-top: 4px;
+  background: transparent;
+  border: none;
+  color: #f97373;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.main.terminal-mode .running-plan-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+@media (max-width: 1024px) {
+  .main.terminal-mode .running-plan-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main.terminal-mode .runplan-apply-btn,
+.main.terminal-mode .coach-notes-button,
+.main.terminal-mode .ai-plan-actions button {
+  border-radius: 999px;
+  border: 1px solid #22d3ee;
+  background: #020617;
+  color: #e5e7eb;
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.main.terminal-mode .runplan-apply-btn:hover,
+.main.terminal-mode .coach-notes-button:hover,
+.main.terminal-mode .ai-plan-actions button:hover {
+  background: #22d3ee;
+  color: #020617;
+}
+
+.main.terminal-mode .modal-backdrop {
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.main.terminal-mode .modal {
+  background: #020617;
+  border-radius: 18px;
+  border: 1px solid #0f172a;
+  color: #e5e7eb;
+}
+
+
+/* ===================================================================== */
+/* 🔥 MODAL READABILITY FIX — Make both Create Day Plan + Generate AI Plan bright */
+/* ===================================================================== */
+
+:root {
+  --text-main: #e5e7eb;          /* Bright readable text */
+  --text-soft: #9ca3af;
+  --border-subtle: #1e293b;
+  --accent: #22d3ee;
+  --accent-soft: rgba(34, 211, 238, 0.15);
+  --accent-strong: #67e8f9;
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.15);
+}
+
+/* ===== Make ALL modals readable in dark theme ===== */
+
+.main.terminal-mode .modal-backdrop {
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(12px);
+}
+
+.main.terminal-mode .modal {
+  background: #020617 !important;
+  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95);
+}
+
+/* Modal titles */
+.main.terminal-mode .modal h3,
+.main.terminal-mode .modal-header {
+  color: #f8fafc !important;
+}
+
+/* Labels inside modals */
+.main.terminal-mode .modal label,
+.main.terminal-mode .modal .plan-modal-section-title {
+  color: var(--text-main) !important;
+}
+
+/* Inputs inside modals */
+.main.terminal-mode .modal input,
+.main.terminal-mode .modal select,
+.main.terminal-mode .modal textarea {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* Placeholder */
+.main.terminal-mode .modal input::placeholder,
+.main.terminal-mode .modal textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* AI plan weekly availability row text */
+.main.terminal-mode .modal .availability-row,
+.main.terminal-mode .modal .ai-plan-slots-table td,
+.main.terminal-mode .modal .ai-plan-slots-table th {
+  color: var(--text-main) !important;
+}
+
+/* Modal buttons */
+.main.terminal-mode .modal-actions button {
+  border-radius: 999px;
+  border: 1px solid var(--accent) !important;
+  background: #020617 !important;
+  color: var(--text-main) !important;
+}
+
+.main.terminal-mode .modal-actions button:hover {
+  background: var(--accent) !important;
+  color: #020617 !important;
+}
+
+/* Checkbox labels in AI plan modal */
+.main.terminal-mode .modal input[type="checkbox"] + span {
+  color: var(--text-main) !important;
+}
+
+/* Injury detail + target event labels */
+.main.terminal-mode .modal .hint-text,
+.main.terminal-mode .modal small {
+  color: var(--text-soft) !important;
+}
+
+/* Fix time range UI (From / To labels) */
+.main.terminal-mode .modal .time-range-label {
+  color: var(--text-main) !important;
+}
+
+/* Sidebar footer: stick to bottom */
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Logout button (bottom-left) */
+.sidebar-logout {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.sidebar-logout:hover {
+  background: #22d3ee;
+  color: #020617;
+  transform: translateY(-1px);
+}
+
+.sidebar-logout:active {
+  transform: translateY(0);
+}
+
+/* Extra spacing between Strava button and Logout */
+.sidebar-strava-block {
+  margin-bottom: 20px; 
+}
+
+/* ==== Dark neon auth page (login / register) ==== */
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "PingFang SC", "Segoe UI", sans-serif;
+}
+
+/* floating balls */
+.auth-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(0.5px);
+  opacity: 0.6;
+}
+
+.auth-orb-left {
+  width: 260px;
+  height: 260px;
+  top: -60px;
+  left: -40px;
+  background: radial-gradient(circle at 30% 30%, #f973ff, #7c3aed 55%, #1f2937);
+}
+
+.auth-orb-right {
+  width: 180px;
+  height: 180px;
+  top: 60px;
+  right: -20px;
+  background: radial-gradient(circle at 30% 30%, #6b7280, #020617 70%);
+}
+
+/* central card */
+
+.auth-card-dark {
+  position: relative;
+  z-index: 10;
+  width: 380px;
+  max-width: 90vw;
+  padding: 28px 26px 26px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #020617 0, #020617 65%, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+}
+
+/* header */
+
+.auth-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.auth-title-dark {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.auth-title-pill {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(129, 140, 248, 0.55);
+  color: #a5b4fc;
+}
+
+.auth-subtitle-dark {
+  margin: 0 0 14px 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* form */
+
+.auth-form-dark {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-label-dark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #cbd5f5;
+}
+
+.auth-input-dark {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  background: rgba(15, 23, 42, 0.95);
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.auth-input-dark::placeholder {
+  color: #6b7280;
+}
+
+.auth-input-dark:focus {
+  outline: none;
+  border-color: #22d3ee;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.55),
+    0 0 18px rgba(34, 211, 238, 0.35);
+}
+
+/* role toggle */
+
+.auth-role-toggle-dark {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.auth-role-chip {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: rgba(15, 23, 42, 0.95);
+  color: #e5e7eb;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.06s ease;
+}
+
+.auth-role-chip-active {
+  border-color: #f973ff;
+  background: radial-gradient(circle at top left, #f973ff, #7c3aed 60%, #020617);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.45);
+  transform: translateY(-1px);
+}
+
+/* button */
+
+.auth-button-dark {
+  margin-top: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #f9fafb;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  box-shadow:
+    0 18px 45px rgba(37, 99, 235, 0.5),
+    0 0 0 1px rgba(59, 130, 246, 0.7);
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
+}
+
+.auth-button-dark:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow:
+    0 22px 55px rgba(37, 99, 235, 0.7),
+    0 0 0 1px rgba(129, 140, 248, 0.9);
+}
+
+.auth-button-dark:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* footer */
+
+.auth-footer-dark {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.auth-link-dark {
+  border: none;
+  background: none;
+  color: #a5b4fc;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* error / success */
+
+.auth-error-dark {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #fecaca;
+}
+
+.auth-success-dark {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #bbf7d0;
+}
+
+/* small screen */
+
+@media (max-width: 480px) {
+  .auth-card-dark {
+    width: 100%;
+    margin: 0 16px;
+  }
+}
+
+/* ====== Full-screen auth layout ====== */
+
+.auth-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 10% -10%, #3b82f6 0, transparent 55%),
+    radial-gradient(circle at 90% 110%, #a855f7 0, transparent 55%),
+    linear-gradient(135deg, #020617, #020617 40%, #020617);
+  color: #e5e7eb;
+  overflow: hidden;
+}
+
+/* 左侧氛围区 */
+
+.auth-hero {
+  position: relative;
+  padding: 4rem 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.auth-hero-orbit {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  top: -80px;
+  right: -60px;
+  background: radial-gradient(circle at 30% 20%, #f97316, #a855f7, #1d1b3f);
+  filter: blur(4px);
+  border-radius: 9999px;
+  opacity: 0.75;
+}
+
+.auth-hero-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  bottom: 40px;
+  left: 60px;
+  background: radial-gradient(circle, rgba(56,189,248,0.7), transparent 60%);
+  filter: blur(2px);
+  opacity: 0.7;
+}
+
+.auth-hero-content {
+  position: relative;
+  max-width: 540px;
+  z-index: 1;
+}
+
+.auth-hero-title {
+  font-size: 2.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #f9fafb;
+  margin-bottom: 1rem;
+}
+
+.auth-hero-subtitle {
+  font-size: 1.05rem;
+  color: #cbd5f5;
+  max-width: 420px;
+  margin-bottom: 1.75rem;
+}
+
+.auth-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2.25rem;
+}
+
+.auth-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(15,23,42,0.7);
+  border: 1px solid rgba(148,163,184,0.35);
+  color: #e5e7eb;
+}
+
+.auth-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.auth-stat-card {
+  min-width: 150px;
+  padding: 0.9rem 1.1rem;
+  border-radius: 1rem;
+  background: radial-gradient(circle at 0 0, rgba(148,163,255,0.35), transparent 50%),
+    rgba(15,23,42,0.9);
+  border: 1px solid rgba(148,163,184,0.4);
+  box-shadow: 0 18px 45px rgba(15,23,42,0.9);
+}
+
+.auth-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.auth-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+/* 右侧表单区 */
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 3.5rem;
+}
+
+.auth-card-main {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem 2.25rem;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at 0 0, rgba(251,113,133,0.18), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(129,140,248,0.18), transparent 55%),
+    rgba(15,23,42,0.96);
+  border: 1px solid rgba(148,163,184,0.35);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(15,23,42,0.9);
+}
+
+/* 标题与 pill */
+
+.auth-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.auth-title-main {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.auth-subtitle-main {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.auth-pill {
+  align-self: center;
+  padding: 0.25rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #f9fafb;
+}
+
+/* 表单 */
+
+.auth-form-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-label-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+}
+
+.auth-input-main {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148,163,184,0.4);
+  background: rgba(15,23,42,0.8);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+  color: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.auth-input-main::placeholder {
+  color: #6b7280;
+}
+
+.auth-input-main:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(129,140,248,0.7),
+    0 0 0 8px rgba(79,70,229,0.22);
+  background: rgba(15,23,42,0.95);
+}
+
+/* 角色切换 */
+
+.auth-role-toggle-main {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  padding: 0.18rem;
+  border-radius: 9999px;
+  background: rgba(15,23,42,0.9);
+  border: 1px solid rgba(148,163,184,0.4);
+}
+
+.auth-role-chip-main {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.auth-role-chip-main-active {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #f9fafb;
+  transform: translateY(-1px);
+}
+
+/* 按钮和状态 */
+
+.auth-button-main {
+  margin-top: 0.4rem;
+  width: 100%;
+  border-radius: 9999px;
+  border: none;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #f9fafb;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  box-shadow: 0 18px 45px rgba(79,70,229,0.45);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    filter 0.12s ease;
+}
+
+.auth-button-main:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 24px 60px rgba(79,70,229,0.6);
+}
+
+.auth-button-main:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+.auth-error-main {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #fecaca;
+  background: rgba(127,29,29,0.6);
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.7rem;
+}
+
+.auth-success-main {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #bbf7d0;
+  background: rgba(22,101,52,0.6);
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.7rem;
+}
+
+/* 底部小字 */
+
+.auth-footer-main {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.auth-link-main {
+  border: none;
+  padding: 0;
+  background: none;
+  color: #c4b5fd;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ====== 响应式：窄屏改成上下布局 ====== */
+
+@media (max-width: 900px) {
+  .auth-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .auth-hero {
+    padding: 3.5rem 1.5rem 2.5rem;
+  }
+
+  .auth-panel {
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  .auth-card-main {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .auth-hero-orbit {
+    top: -140px;
+    right: -120px;
+  }
+
+  .auth-hero-glow {
+    bottom: -40px;
+    left: 40px;
+  }
+}
+
+.card .layout-root {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.card .layout-root .sidebar {
+  display: none;
+}
+
+.card .layout-root .main {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;                  
+  background: transparent;     
+  box-shadow: none;
+  overflow-x: hidden;         
+}
+
+.card .main.terminal-mode {
+  max-width: 100%;
+}
+
+/* Ensure Card containing embedded dashboard is properly constrained */
+.card {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .card-body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Force ResponsiveContainer to respect parent width */
+.card .embedded-dashboard [class*="ResponsiveContainer"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.card .embedded-dashboard svg.recharts-surface {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+/* Ensure grid items can shrink */
+.grid.grid-1 {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.grid.grid-1 > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Embedded dashboard constraints for coach dashboard */
+.card .embedded-dashboard {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .main {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .terminal-card,
+.card .embedded-dashboard .card {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .terminal-card-body,
+.card .embedded-dashboard .card-body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Constrain ResponsiveContainer charts in embedded mode */
+.card .embedded-dashboard .recharts-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.card .embedded-dashboard .recharts-surface {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.card .embedded-dashboard .recharts-responsive-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure chart containers fit */
+.card .embedded-dashboard .chart-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .terminal-card-body > div[class*="recharts"],
+.card .embedded-dashboard .terminal-card-body > div[class*="ResponsiveContainer"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Constrain large terminal cards with charts */
+.card .embedded-dashboard .terminal-card-large {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .terminal-card-large .terminal-card-body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Constrain Recent Strava runs section */
+.card .embedded-dashboard .recent-runs-list {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .recent-run-row {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure training load and other sections fit */
+.card .embedded-dashboard section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.card .embedded-dashboard .grid {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Ensure terminal ribbon and ticker fit */
+.card .embedded-dashboard .terminal-ribbon,
+.card .embedded-dashboard .terminal-ticker {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+
