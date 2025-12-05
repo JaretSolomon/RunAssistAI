@@ -92,13 +92,9 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
   const [weekPlanApplying, setWeekPlanApplying] = useState(false);
 
   // -------- AI config & result --------
-  const [aiPreview, setAiPreview] = useState<AiPlanPreviewResponse | null>(
-    null
-  );
+  const [aiPreview, setAiPreview] = useState<AiPlanPreviewResponse | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  //const [aiLastPayload, setAiLastPayload] =
-  //  useState<AiPlanGenerateRequest | null>(null);
 
   // Modal open state for AI config
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -178,18 +174,21 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
       await loadCalendar();
       setDayModalOpen(false);
     } catch (e: any) {
-      alert(e.message || "Failed to create plan");
+      console.error(e);
+      // Show error inline instead of using a blocking alert dialog
+      setError(e.message || "Failed to create plan");
     }
   }
 
   async function handleDeletePlan(plan: RunningPlanDayPlan) {
-    if (!window.confirm("Delete this plan?")) return;
+    // Keep confirm dialog for destructive action
     try {
       await deleteDayPlanApi(userId, plan.id);
       await loadCalendar();
       setViewModalPlans((prev) => prev.filter((p) => p.id !== plan.id));
     } catch (e: any) {
-      alert(e.message || "Failed to delete plan");
+      console.error(e);
+      setError(e.message || "Failed to delete plan");
     }
   }
 
@@ -232,12 +231,13 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
     if (!content) return;
 
     try {
+      setNotesError(null);
       const newNote = await createCoachNoteApi(coachId, userId, content);
       setNoteInput("");
       setNotes((prev) => [newNote, ...prev]);
     } catch (e: any) {
       console.error(e);
-      alert(e.message || "Failed to add note");
+      setNotesError(e.message || "Failed to add note");
     }
   }
 
@@ -257,7 +257,10 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
     setDayModalOpen(true);
   }
 
-  function handleCalendarCellClick(dateStr: string, plans: RunningPlanDayPlan[]) {
+  function handleCalendarCellClick(
+    dateStr: string,
+    plans: RunningPlanDayPlan[]
+  ) {
     const now = Date.now();
 
     // Second click on same date within 350ms → treat as double-click
@@ -279,7 +282,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
     setLastClick({ time: now, date: dateStr });
 
     if (clickTimerRef.current !== null) {
-      window.clearTimeout(clickTimerRef.current);
+      window.clearTimeout(clickTimerRefRef.current);
       clickTimerRef.current = null;
     }
 
@@ -307,14 +310,17 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
 
   async function handleApplyWeekPlan() {
     try {
+      // Clear previous error before validating input
+      setError(null);
+
       if (!weekPlanStartDate || !weekPlanEndDate) {
-        alert("Please select start and end date.");
+        setError("Please select start and end date.");
         return;
       }
       const start = parseDate(weekPlanStartDate);
       const end = parseDate(weekPlanEndDate);
       if (start > end) {
-        alert("Start date must be before end date.");
+        setError("Start date must be before end date.");
         return;
       }
 
@@ -342,7 +348,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
       }
 
       if (tasks.length === 0) {
-        alert("No matching days in the selected range.");
+        setError("No matching days in the selected range.");
         setWeekPlanApplying(false);
         return;
       }
@@ -353,10 +359,11 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
       }
 
       await loadCalendar();
-      alert(`Created ${tasks.length} day plans for the selected weekday.`);
+      // Log success to console instead of showing a blocking alert
+      console.log(`Created ${tasks.length} day plans for the selected weekday.`);
     } catch (e: any) {
       console.error(e);
-      alert(e.message || "Failed to apply week plan");
+      setError(e.message || "Failed to apply week plan");
     } finally {
       setWeekPlanApplying(false);
     }
@@ -394,14 +401,16 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
 
   async function handleGenerateAiPlan() {
     try {
+      setAiError(null);
+
       if (!aiHeight || !aiWeight || !aiAge) {
-        alert("Please fill height, weight and age.");
+        setAiError("Please fill height, weight and age.");
         return;
       }
 
       const enabledSlots = aiWeeklySlots.filter((s) => s.enabled);
       if (enabledSlots.length === 0) {
-        alert("Please enable at least one time slot in the week.");
+        setAiError("Please enable at least one time slot in the week.");
         return;
       }
 
@@ -412,14 +421,14 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
       if (aiGoalMode === "distance") {
         const dist = Number(aiRaceDistance);
         if (!dist || Number.isNaN(dist)) {
-          alert("Please choose a valid race distance.");
+          setAiError("Please choose a valid race distance.");
           return;
         }
         target_distance_m = dist;
         goal_type = `race_${dist}m`;
       } else {
         if (!aiTargetWeight || aiTargetWeight <= 0) {
-          alert("Please input a valid target weight.");
+          setAiError("Please input a valid target weight.");
           return;
         }
         goal_type = "weight_loss";
@@ -439,7 +448,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
         target_distance_m,
         target_weight_kg,
 
-        // NEW: send fitness level to backend
+        // Send fitness level to backend
         fitness_level: aiFitnessLevel,
 
         weekly_slots: enabledSlots.map((s) => ({
@@ -453,7 +462,6 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
       setAiError(null);
       const res = await previewAiPlan(userId, payload);
       setAiPreview(res);
-      //setAiLastPayload(payload);
       setAiModalOpen(false);
     } catch (e: any) {
       console.error(e);
@@ -465,7 +473,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
 
   async function handleApplyAi() {
     if (!aiPreview) {
-      alert("Please generate your AI plan first.");
+      setAiError("Please generate your AI plan first.");
       return;
     }
 
@@ -479,7 +487,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
 
       await applyAiPlan(userId, applyPayload);
       await loadCalendar();
-      alert("AI weekly plan applied for the next 30 days.");
+      // Success is silent; calendar will reflect the applied plan
+      console.log("AI weekly plan applied for the next 30 days.");
     } catch (e: any) {
       console.error(e);
       setAiError(e.message || "Failed to apply AI plan");
@@ -488,79 +497,310 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
     }
   }
 
-
   return (
     <div className="running-plan-page">
-      <Card title="Running plan calendar">
-        <div className="calendar-header">
-          <button onClick={() => changeMonth(-1)}>{"<"}</button>
-          <span>
-            {year} - {month.toString().padStart(2, "0")}
-          </span>
-          <button onClick={() => changeMonth(1)}>{">"}</button>
-        </div>
-
-        {loading && <div>Loading calendar...</div>}
-        {error && <div className="error-text">{error}</div>}
-
-        {calendar && (
-          <div className="calendar-grid">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-              <div key={d} className="calendar-weekday">
-                {d}
-              </div>
-            ))}
-            {calendar.days.map((day) => (
-              <div
-                key={day.date}
-                className={
-                  "calendar-cell" + (day.is_today ? " calendar-cell-today" : "")
-                }
-                onClick={() => handleCalendarCellClick(day.date, day.plans)}
-                style={{ cursor: "pointer" }}
-                title="Single-click to view plans, double-click to create a new plan"
-              >
-                <div className="calendar-date">{day.date.slice(-2)}</div>
-                {day.plans.length === 0 ? (
-                  <div className="calendar-no-plan">No plan</div>
-                ) : (
-                  day.plans.map((p) => (
-                    <div key={p.id} className="calendar-plan">
-                      <div>
-                        {p.start_time} · {p.duration_minutes}min ·{" "}
-                        {p.distance_km}km
-                      </div>
-                      {p.activity && (
-                        <div className="calendar-plan-activity">
-                          {p.activity}
-                        </div>
-                      )}
-                      <button
-                        className="calendar-plan-delete"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePlan(p);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            ))}
+      <section className="grid grid-1">
+        <Card title="Running plan calendar">
+          <div className="calendar-header">
+            <button type="button" onClick={() => changeMonth(-1)}>
+              {"<"}
+            </button>
+            <span>
+              {year} - {month.toString().padStart(2, "0")}
+            </span>
+            <button type="button" onClick={() => changeMonth(1)}>
+              {">"}
+            </button>
           </div>
-        )}
-      </Card>
+
+          {loading && <div>Loading calendar...</div>}
+          {error && <div className="error-text">{error}</div>}
+
+          {calendar && (
+            <div className="calendar-grid">
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                <div key={d} className="calendar-weekday">
+                  {d}
+                </div>
+              ))}
+              {calendar.days.map((day) => (
+                <div
+                  key={day.date}
+                  className={
+                    "calendar-cell" +
+                    (day.is_today ? " calendar-cell-today" : "")
+                  }
+                  onClick={() =>
+                    handleCalendarCellClick(day.date, day.plans)
+                  }
+                  style={{ cursor: "pointer" }}
+                  title="Single-click to view plans, double-click to create a new plan"
+                >
+                  <div className="calendar-date">
+                    {day.date.slice(-2)}
+                  </div>
+                  {day.plans.length === 0 ? (
+                    <div className="calendar-no-plan">No plan</div>
+                  ) : (
+                    day.plans.map((p) => (
+                      <div key={p.id} className="calendar-plan">
+                        <div>
+                          {p.start_time} · {p.duration_minutes}min ·{" "}
+                          {p.distance_km}km
+                        </div>
+                        {p.activity && (
+                          <div className="calendar-plan-activity">
+                            {p.activity}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="calendar-plan-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePlan(p);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
+
+      <section className="grid grid-3 running-plan-bottom">
+        {/* Manual week plan batch creator */}
+        <Card title="Create a week plan">
+          <p className="runplan-week-hint">
+            Select a date range and a weekday. The same plan will be created on
+            every matching day in that range.
+          </p>
+          <div className="runplan-week-form">
+            <div className="runplan-week-row">
+              <label className="runplan-field">
+                <span>From</span>
+                <input
+                  type="date"
+                  value={weekPlanStartDate}
+                  onChange={(e) => setWeekPlanStartDate(e.target.value)}
+                />
+              </label>
+              <label className="runplan-field">
+                <span>To</span>
+                <input
+                  type="date"
+                  value={weekPlanEndDate}
+                  onChange={(e) => setWeekPlanEndDate(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="runplan-week-row">
+              <label className="runplan-field">
+                <span>Weekday</span>
+                <select
+                  value={weekPlanWeekday}
+                  onChange={(e) =>
+                    setWeekPlanWeekday(Number(e.target.value))
+                  }
+                >
+                  <option value={1}>Mon</option>
+                  <option value={2}>Tue</option>
+                  <option value={3}>Wed</option>
+                  <option value={4}>Thu</option>
+                  <option value={5}>Fri</option>
+                  <option value={6}>Sat</option>
+                  <option value={0}>Sun</option>
+                </select>
+              </label>
+
+              <label className="runplan-field">
+                <span>Start time</span>
+                <input
+                  type="time"
+                  value={weekPlanStartTime}
+                  onChange={(e) =>
+                    setWeekPlanStartTime(e.target.value)
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="runplan-week-row">
+              <label className="runplan-field">
+                <span>Duration (min)</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={weekPlanDuration}
+                  onChange={(e) =>
+                    setWeekPlanDuration(Number(e.target.value))
+                  }
+                />
+              </label>
+
+              <label className="runplan-field">
+                <span>Distance (km)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={weekPlanDistance}
+                  onChange={(e) =>
+                    setWeekPlanDistance(Number(e.target.value))
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="runplan-week-row runplan-week-row-last">
+              <label className="runplan-field runplan-field-wide">
+                <span>Activity</span>
+                <input
+                  type="text"
+                  value={weekPlanActivity}
+                  onChange={(e) =>
+                    setWeekPlanActivity(e.target.value)
+                  }
+                  placeholder="Main run"
+                />
+              </label>
+
+              <div className="runplan-week-actions">
+                <button
+                  type="button"
+                  className="runplan-apply-btn"
+                  onClick={handleApplyWeekPlan}
+                  disabled={weekPlanApplying}
+                >
+                  {weekPlanApplying ? "Applying..." : "Apply to range"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Coach notes */}
+        <Card title="Coach notes">
+          {notesLoading && <div>Loading notes...</div>}
+          {notesError && <div className="error-text">{notesError}</div>}
+
+          {isCoachView ? (
+            <div className="coach-notes-form">
+              <textarea
+                className="coach-notes-textarea"
+                placeholder="Write a note for this runner..."
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className="coach-notes-button"
+                onClick={handleAddNote}
+                disabled={!noteInput.trim()}
+              >
+                Add note
+              </button>
+            </div>
+          ) : (
+            <p className="coach-notes-hint">
+              These notes are written by your coach and cannot be edited.
+            </p>
+          )}
+
+          <div className="coach-notes-list">
+            {notes.length === 0 ? (
+              <div className="coach-notes-empty">No notes yet.</div>
+            ) : (
+              notes.map((n) => (
+                <div key={n.id} className="coach-notes-item">
+                  <div className="coach-notes-meta">
+                    <span className="coach-notes-author">
+                      {n.coach_name || "Coach"}
+                    </span>
+                    <span className="coach-notes-time">
+                      {formatNoteTime(n.created_at)}
+                    </span>
+                  </div>
+                  <div className="coach-notes-content">{n.content}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        {/* AI weekly plan */}
+        <Card title="AI weekly plan">
+          <p>
+            Let AI generate a weekly training template based on your
+            profile, goal, fitness level and available time. You can preview the
+            plan and then apply it to the next 30 days in your calendar.
+          </p>
+          <div className="ai-plan-actions">
+            <button
+              type="button"
+              disabled={aiLoading}
+              onClick={() => setAiModalOpen(true)}
+            >
+              Generate my AI plan
+            </button>
+            <button
+              type="button"
+              disabled={aiLoading || !aiPreview}
+              onClick={handleApplyAi}
+            >
+              Apply to next 30 days
+            </button>
+          </div>
+          {aiLoading && <div>Working...</div>}
+          {aiError && <div className="error-text">{aiError}</div>}
+          {aiPreview && (
+            <div className="ai-preview">
+              {aiPreview.weekly_template.map((day: AiPlanPreviewDay) => (
+                <div key={day.weekday} className="ai-preview-day">
+                  <strong>
+                    {weekdayLabels[day.weekday]} (weekday {day.weekday})
+                  </strong>
+                  {day.activities.length === 0 ? (
+                    <div>No activities</div>
+                  ) : (
+                    <ul>
+                      {day.activities.map(
+                        (a: AiPlanPreviewActivity, idx: number) => (
+                          <li key={idx}>
+                            <div>
+                              {a.start_time} · {a.duration_minutes}min ·{" "}
+                              {a.distance_km}km · {a.activity}
+                            </div>
+                            <div className="ai-preview-desc">
+                              {a.description ??
+                                defaultDescription(a.activity)}
+                            </div>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
 
       {/* Create day plan modal */}
       {dayModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal">
+          <div className="modal" style={{ maxWidth: 520 }}>
             <h3>Create a day plan</h3>
             <div className="form-row">
-              <label>
-                Date
+              <label className="runplan-field">
+                <span>Date</span>
                 <input
                   type="date"
                   value={newPlan.date}
@@ -569,20 +809,23 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                   }
                 />
               </label>
-              <label>
-                Start time
+              <label className="runplan-field">
+                <span>Start time</span>
                 <input
                   type="time"
                   value={newPlan.start_time}
                   onChange={(e) =>
-                    setNewPlan((p) => ({ ...p, start_time: e.target.value }))
+                    setNewPlan((p) => ({
+                      ...p,
+                      start_time: e.target.value,
+                    }))
                   }
                 />
               </label>
             </div>
             <div className="form-row">
-              <label>
-                Duration (min)
+              <label className="runplan-field">
+                <span>Duration (min)</span>
                 <input
                   type="number"
                   value={newPlan.duration_minutes}
@@ -594,8 +837,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                   }
                 />
               </label>
-              <label>
-                Distance (km)
+              <label className="runplan-field">
+                <span>Distance (km)</span>
                 <input
                   type="number"
                   value={newPlan.distance_km}
@@ -609,8 +852,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
               </label>
             </div>
             <div className="form-row">
-              <label>
-                Activity
+              <label className="runplan-field runplan-field-wide">
+                <span>Activity</span>
                 <input
                   type="text"
                   value={newPlan.activity ?? ""}
@@ -621,12 +864,15 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
               </label>
             </div>
             <div className="form-row">
-              <label>
-                Description
+              <label className="runplan-field runplan-field-wide">
+                <span>Description</span>
                 <textarea
                   value={newPlan.description ?? ""}
                   onChange={(e) =>
-                    setNewPlan((p) => ({ ...p, description: e.target.value }))
+                    setNewPlan((p) => ({
+                      ...p,
+                      description: e.target.value,
+                    }))
                   }
                   rows={4}
                   style={{ width: "100%" }}
@@ -634,8 +880,12 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
               </label>
             </div>
             <div className="modal-actions">
-              <button onClick={() => setDayModalOpen(false)}>Cancel</button>
-              <button onClick={handleCreatePlan}>Create</button>
+              <button type="button" onClick={() => setDayModalOpen(false)}>
+                Cancel
+              </button>
+              <button type="button" onClick={handleCreatePlan}>
+                Create
+              </button>
             </div>
           </div>
         </div>
@@ -668,7 +918,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                         style={{
                           marginTop: 4,
                           fontSize: 13,
-                          color: "#555",
+                          color: "#ddd",
                           whiteSpace: "pre-wrap",
                         }}
                       >
@@ -677,6 +927,7 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                       </div>
                     )}
                     <button
+                      type="button"
                       className="calendar-plan-delete"
                       onClick={() => handleDeletePlan(p)}
                     >
@@ -688,8 +939,13 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
             )}
 
             <div className="modal-actions">
-              <button onClick={() => setViewModalOpen(false)}>Close</button>
-              <button onClick={() => openCreatePlanForDate(viewModalDate)}>
+              <button type="button" onClick={() => setViewModalOpen(false)}>
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => openCreatePlanForDate(viewModalDate)}
+              >
                 Add plan on this day
               </button>
             </div>
@@ -704,24 +960,24 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
             <h3>Generate my AI plan</h3>
 
             <div className="form-row">
-              <label>
-                Height (cm)
+              <label className="runplan-field">
+                <span>Height (cm)</span>
                 <input
                   type="number"
                   value={aiHeight}
                   onChange={(e) => setAiHeight(Number(e.target.value))}
                 />
               </label>
-              <label>
-                Weight (kg)
+              <label className="runplan-field">
+                <span>Weight (kg)</span>
                 <input
                   type="number"
                   value={aiWeight}
                   onChange={(e) => setAiWeight(Number(e.target.value))}
                 />
               </label>
-              <label>
-                Age
+              <label className="runplan-field">
+                <span>Age</span>
                 <input
                   type="number"
                   value={aiAge}
@@ -731,8 +987,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
             </div>
 
             <div className="form-row">
-              <label>
-                Fitness level
+              <label className="runplan-field">
+                <span>Fitness level</span>
                 <select
                   value={aiFitnessLevel}
                   onChange={(e) =>
@@ -740,16 +996,18 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                   }
                 >
                   <option value="beginner">Beginner</option>
-                  <option value="regular">regular</option>
+                  <option value="regular">Regular</option>
                   <option value="athlete">Athlete</option>
                 </select>
               </label>
 
-              <label>
-                Goal
+              <label className="runplan-field">
+                <span>Goal</span>
                 <select
                   value={aiGoalMode}
-                  onChange={(e) => setAiGoalMode(e.target.value as GoalMode)}
+                  onChange={(e) =>
+                    setAiGoalMode(e.target.value as GoalMode)
+                  }
                 >
                   <option value="distance">Race performance</option>
                   <option value="weight">Weight loss</option>
@@ -757,8 +1015,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
               </label>
 
               {aiGoalMode === "distance" && (
-                <label>
-                  Target event
+                <label className="runplan-field">
+                  <span>Target event</span>
                   <select
                     value={aiRaceDistance}
                     onChange={(e) => setAiRaceDistance(e.target.value)}
@@ -777,8 +1035,8 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
               )}
 
               {aiGoalMode === "weight" && (
-                <label>
-                  Target weight (kg)
+                <label className="runplan-field">
+                  <span>Target weight (kg)</span>
                   <input
                     type="number"
                     value={aiTargetWeight}
@@ -791,16 +1049,19 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
             </div>
 
             <div className="form-row">
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <label
+                className="runplan-field"
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
                 <input
                   type="checkbox"
                   checked={aiHasInjury}
                   onChange={(e) => setAiHasInjury(e.target.checked)}
                 />
-                Have injury
+                <span>Have injury</span>
               </label>
-              <label style={{ flex: 1 }}>
-                Injury detail (e.g. left knee, Achilles)
+              <label className="runplan-field runplan-field-wide">
+                <span>Injury detail (e.g. left knee, Achilles)</span>
                 <input
                   type="text"
                   value={aiInjuryDetail}
@@ -855,7 +1116,11 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
                         value={slot.end_time}
                         disabled={!slot.enabled}
                         onChange={(e) =>
-                          handleChangeSlot(idx, "end_time", e.target.value)
+                          handleChangeSlot(
+                            idx,
+                            "end_time",
+                            e.target.value
+                          )
                         }
                       />
                     </label>
@@ -865,200 +1130,23 @@ export const RunningPlan: React.FC<RunningPlanProps> = ({ userId, coachId }) => 
             </div>
 
             <div className="modal-actions">
-              <button onClick={() => setAiModalOpen(false)}>Cancel</button>
-              <button onClick={handleGenerateAiPlan} disabled={aiLoading}>
+              <button
+                type="button"
+                onClick={() => setAiModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateAiPlan}
+                disabled={aiLoading}
+              >
                 {aiLoading ? "Generating..." : "Generate"}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <div className="running-plan-bottom">
-        {/* Manual week plan batch creator */}
-        <Card title="Create a week plan">
-          <p style={{ marginBottom: "0.5rem", fontSize: 13, color: "#555" }}>
-            Select a date range and a weekday. The same plan will be created on
-            every matching day in that range.
-          </p>
-          <div className="form-row">
-            <label>
-              From
-              <input
-                type="date"
-                value={weekPlanStartDate}
-                onChange={(e) => setWeekPlanStartDate(e.target.value)}
-              />
-            </label>
-            <label>
-              To
-              <input
-                type="date"
-                value={weekPlanEndDate}
-                onChange={(e) => setWeekPlanEndDate(e.target.value)}
-              />
-            </label>
-          </div>
-          <div className="form-row">
-            <label>
-              Weekday
-              <select
-                value={weekPlanWeekday}
-                onChange={(e) => setWeekPlanWeekday(Number(e.target.value))}
-              >
-                <option value={1}>Mon</option>
-                <option value={2}>Tue</option>
-                <option value={3}>Wed</option>
-                <option value={4}>Thu</option>
-                <option value={5}>Fri</option>
-                <option value={6}>Sat</option>
-                <option value={0}>Sun</option>
-              </select>
-            </label>
-            <label>
-              Start time
-              <input
-                type="time"
-                value={weekPlanStartTime}
-                onChange={(e) => setWeekPlanStartTime(e.target.value)}
-              />
-            </label>
-          </div>
-          <div className="form-row">
-            <label>
-              Duration (min)
-              <input
-                type="number"
-                value={weekPlanDuration}
-                onChange={(e) => setWeekPlanDuration(Number(e.target.value))}
-              />
-            </label>
-            <label>
-              Distance (km)
-              <input
-                type="number"
-                value={weekPlanDistance}
-                onChange={(e) => setWeekPlanDistance(Number(e.target.value))}
-              />
-            </label>
-          </div>
-          <div className="form-row">
-            <label>
-              Activity
-              <input
-                type="text"
-                value={weekPlanActivity}
-                onChange={(e) => setWeekPlanActivity(e.target.value)}
-              />
-            </label>
-          </div>
-          <button onClick={handleApplyWeekPlan} disabled={weekPlanApplying}>
-            {weekPlanApplying ? "Applying..." : "Apply to range"}
-          </button>
-        </Card>
-
-        {/* Coach notes */}
-        <Card title="Coach notes">
-          {notesLoading && <div>Loading notes...</div>}
-          {notesError && <div className="error-text">{notesError}</div>}
-
-          {isCoachView ? (
-            <div className="coach-notes-form">
-              <textarea
-                className="coach-notes-textarea"
-                placeholder="Write a note for this runner..."
-                value={noteInput}
-                onChange={(e) => setNoteInput(e.target.value)}
-              />
-              <button
-                className="coach-notes-button"
-                onClick={handleAddNote}
-                disabled={!noteInput.trim()}
-              >
-                Add note
-              </button>
-            </div>
-          ) : (
-            <p className="coach-notes-hint">
-              These notes are written by your coach and cannot be edited.
-            </p>
-          )}
-
-          <div className="coach-notes-list">
-            {notes.length === 0 ? (
-              <div className="coach-notes-empty">No notes yet.</div>
-            ) : (
-              notes.map((n) => (
-                <div key={n.id} className="coach-notes-item">
-                  <div className="coach-notes-meta">
-                    <span className="coach-notes-author">
-                      {n.coach_name || "Coach"}
-                    </span>
-                    <span className="coach-notes-time">
-                      {formatNoteTime(n.created_at)}
-                    </span>
-                  </div>
-                  <div className="coach-notes-content">{n.content}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-
-        {/* AI weekly plan */}
-        <Card title="AI weekly plan">
-          <p>
-            Let ChatGPT generate a weekly training template based on your
-            profile, goal, fitness level and available time. You can preview the
-            plan and then apply it to the next 30 days in your calendar.
-          </p>
-          <div className="ai-plan-actions">
-            <button disabled={aiLoading} onClick={() => setAiModalOpen(true)}>
-              Generate my AI plan
-            </button>
-            <button
-              disabled={aiLoading || !aiPreview}
-              onClick={handleApplyAi}
-            >
-              Apply to next 30 days
-            </button>
-          </div>
-          {aiLoading && <div>Working...</div>}
-          {aiError && <div className="error-text">{aiError}</div>}
-          {aiPreview && (
-            <div className="ai-preview">
-              {aiPreview.weekly_template.map(
-                (day: AiPlanPreviewDay) => (
-                  <div key={day.weekday} className="ai-preview-day">
-                    <strong>
-                      {weekdayLabels[day.weekday]} (weekday {day.weekday})
-                    </strong>
-                    {day.activities.length === 0 ? (
-                      <div>No activities</div>
-                    ) : (
-                      <ul>
-                        {day.activities.map(
-                          (a: AiPlanPreviewActivity, idx: number) => (
-                            <li key={idx}>
-                              <div>
-                                {a.start_time} · {a.duration_minutes}min ·{" "}
-                                {a.distance_km}km · {a.activity}
-                              </div>
-                              <div className="ai-preview-desc">
-                                {a.description ?? defaultDescription(a.activity)}
-                              </div>
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </Card>
-      </div>
     </div>
   );
 };
