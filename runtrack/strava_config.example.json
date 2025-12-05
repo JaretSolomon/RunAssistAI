@@ -1,0 +1,8 @@
+{
+  "client_id": "188038",
+  "client_secret": "d9c458b27bf0ec4804240e0089cce62f5fd2b513",
+  "redirect_uri": "http://localhost:8000/api/strava/callback",
+  "state_secret": "4f0f1e9c5b2840da8c2e7d513b6a4f9d",
+  "post_auth_redirect": "http://localhost:5173/"
+}
+
