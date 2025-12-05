@@ -180,7 +180,7 @@ export interface AiPlanPreviewResponse {
     target_distance_m?: number;
     target_weight_kg?: number;
 
-    // ✅ echo back from backend if you like
+    // echo back from backend if you like
     fitness_level?: string;
   };
   weekly_template: AiPlanPreviewDay[];
@@ -338,9 +338,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export async function registerUser(
   username: string,
+  password: string,
   role: UserRole
 ): Promise<User> {
-  const body = { username, role };
+  const body = { username, password, role };
   return request<User>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(body),
@@ -348,18 +349,20 @@ export async function registerUser(
 }
 
 /**
- * Login: must provide username + role
+ * Login: username + password + role
  */
 export async function loginUser(
   username: string,
+  password: string,
   role: UserRole
 ): Promise<User> {
-  const body = { username, role };
+  const body = { username, password, role };
   return request<User>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
+
 
 // =====================================
 // Dashboard
@@ -505,11 +508,21 @@ export async function createDayPlanApi(
   userId: string,
   payload: DayPlanCreatePayload
 ): Promise<RunningPlanItem> {
-  return request<RunningPlanItem>(`/api/running_plan/day/${userId}`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  try {
+    return await request<RunningPlanItem>(`/api/running_plan/day/${userId}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    // retry once after small delay
+    await new Promise(res => setTimeout(res, 300));
+    return await request<RunningPlanItem>(`/api/running_plan/day/${userId}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
 }
+
 
 export async function deleteDayPlanApi(
   userId: string,
