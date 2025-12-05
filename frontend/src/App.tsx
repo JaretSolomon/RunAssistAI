@@ -15,6 +15,8 @@ import {
 
 type View = "login" | "register" | "dashboard";
 
+const USER_STORAGE_KEY = "runassist:user";
+
 export const App: React.FC = () => {
   const [view, setView] = useState<View>("login");
   const [user, setUser] = useState<User | null>(null);
@@ -25,27 +27,65 @@ export const App: React.FC = () => {
   const [loadingDash, setLoadingDash] = useState(false);
   const [dashError, setDashError] = useState<string | null>(null);
 
-  // Login: must be a registered user + selected role
-  async function handleLogin(username: string, role: UserRole) {
-    const u = await loginUser(username, role);
-    setUser(u);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(USER_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed: User = JSON.parse(stored);
+        if (parsed.id && parsed.role) {
+          setUser(parsed);
+          setView("dashboard");
+        } else {
+          localStorage.removeItem(USER_STORAGE_KEY);
+        }
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
+    }
+    setInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user && view === "dashboard") {
+      setView("login");
+    }
+  }, [user, view]);
+
+  async function handleLogin(
+    username: string,
+    password: string,
+    role: UserRole
+  ) {
+    const u = await loginUser(username, password, role);
+    setUser(u);             
     setView("dashboard");
   }
 
-  // Registration: after success, RegisterForm will switch back to login page
-  async function handleRegister(username: string, role: UserRole) {
-    await registerUser(username, role);
+  async function handleRegister(
+    username: string,
+    password: string,
+    role: UserRole
+  ) {
+    await registerUser(username, password, role);
   }
 
-  // Only runners need to load dashboard data
   useEffect(() => {
     if (!user || user.role !== "runner" || view !== "dashboard") return;
     setLoadingDash(true);
     setDashError(null);
     fetchDashboard(user.id, days, weeks)
-      .then((data) => {
-        setDashboard(data);
-      })
+      .then((data) => setDashboard(data))
       .catch((err) => {
         console.error(err);
         setDashError(err.message || "Failed to load dashboard");
@@ -53,38 +93,31 @@ export const App: React.FC = () => {
       .finally(() => setLoadingDash(false));
   }, [user, view, days, weeks]);
 
-  if (!user && view === "dashboard") {
-    setView("login");
+  if (!initialized) {
+    return <div>Loading…</div>;
   }
 
-  // ---- Login Page ----
   if (view === "login") {
     return (
-      <div className="auth-page">
-        <LoginForm
-          onLogin={handleLogin}
-          switchToRegister={() => setView("register")}
-        />
-      </div>
+      <LoginForm
+        onLogin={handleLogin}
+        switchToRegister={() => setView("register")}
+      />
     );
   }
 
-  // ---- Register Page ----
   if (view === "register") {
     return (
-      <div className="auth-page">
-        <RegisterForm
-          onRegister={handleRegister}
-          switchToLogin={() => setView("login")}
-        />
-      </div>
+      <RegisterForm
+        onRegister={handleRegister}
+        switchToLogin={() => setView("login")}
+      />
     );
   }
 
-  // ---- Dashboard ----
+  // Dashboard
   if (!user) return null;
 
-  // Coach view
   if (user.role === "coach") {
     return (
       <div className="app-root">
@@ -93,7 +126,6 @@ export const App: React.FC = () => {
     );
   }
 
-  // Runner view
   return (
     <div className="app-root">
       {loadingDash && !dashboard && (
