@@ -12,7 +12,8 @@ import os
 
 from .repository import Repo
 
-repo = Repo()
+DB_PATH = os.getenv("DB_PATH", "runtracker.db")
+repo = Repo(db_path=DB_PATH)
 CENTRAL_TZ = "America/Chicago"
 
 # === OpenAI 初始化（推荐用环境变量） ===

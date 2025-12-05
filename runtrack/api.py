@@ -1,6 +1,9 @@
-from typing import Optional, List, Literal
+from typing import Any, Dict, List, Literal, Optional
+import os
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -393,6 +396,36 @@ def api_coach_bind_runner(coach_id: str, body: CoachBindRunnerIn):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/api/health")
-def api_health():
-    return {"status": "ok"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ---------- Frontend Serving ----------
+
+# Path to the frontend build directory
+FRONTEND_DIR = os.path.join(os.getcwd(), "frontend", "dist")
+
+if os.path.isdir(FRONTEND_DIR):
+    # Mount the assets folder (contains JS/CSS)
+    assets_path = os.path.join(FRONTEND_DIR, "assets")
+    if os.path.isdir(assets_path):
+        app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
+    # Catch-all route for SPA (must be last)
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Check if the file exists in the frontend directory (e.g., favicon.ico, vite.svg)
+        file_path = os.path.join(FRONTEND_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Fallback to index.html for client-side routing
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        
+        return {"error": "Frontend index.html not found"}
+else:
+    @app.get("/")
+    def root():
+        return {"message": "Backend is running. Frontend build not found in frontend/dist."}

@@ -1,0 +1,30 @@
+# fly.toml app configuration file
+#
+# To deploy:
+# 1. Ensure you have the fly cli installed.
+# 2. run `fly launch` to initialize (it will use this file as a base).
+# 3. You MUST create a persistent volume for the database:
+#    `fly volumes create runtracker_data --region ord --size 1`
+#    (Replace 'ord' with your preferred region)
+
+app = "run-assist-demo"
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DB_PATH = "/data/runtracker.db"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[mounts]]
+  source = "runtracker_data"
+  destination = "/data"
